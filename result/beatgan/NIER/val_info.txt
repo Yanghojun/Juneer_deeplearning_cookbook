@@ -1,0 +1,3 @@
+[1] auc:nan 	 best_auc:nan in epoch[1]
+[2] auc:nan 	 best_auc:nan in epoch[2]
+[3] auc:nan 	 best_auc:nan in epoch[3]
