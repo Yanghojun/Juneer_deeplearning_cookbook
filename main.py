@@ -34,6 +34,7 @@ if __name__ == '__main__':
         logger.info("Test start...")
         model.load()        # BeatGan이 상속하고 있는 (상속하다 == 재산을 물려받다) AD_MODEL에 있는 load 함수
         # model.test_type(test_normal_filename, test_abnormal_filename)
+        model.ori_test_type()
         
         model.test_with_ts_metric()
         # model.test_time()

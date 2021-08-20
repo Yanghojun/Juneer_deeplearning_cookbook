@@ -397,7 +397,7 @@ def load_data_v2(opt, _ele_name:str, _size:int):
     # train / val
     train_norm_data, test_norm_data, val_norm_data = {}, {}, {}
     test_anorm_data, val_anorm_data = {}, {}        # anorm_data는 train에서는 안쓰임
-    print(norm_data['code'].sum(), anorm_data['code'].sum())
+    
     train_nv, test_nv, train_nc, test_nc, train_nl, test_nl = train_test_split(norm_data['value'], 
                                                                                norm_data['code'],      # code는 나중에 ts Metric 적용할 때 쓰임. label에는 안쓰여
                                                                                norm_data['label'],
@@ -412,24 +412,22 @@ def load_data_v2(opt, _ele_name:str, _size:int):
     val_anv, test_anv, val_anc, test_anc, val_anl, test_anl = train_test_split(anorm_data['value'], 
                                                             anorm_data['code'],
                                                             anorm_data['label'],
-                                                            test_size=0.2, 
+                                                            test_size=0.08, 
                                                             shuffle=True
                                                             )
     
     ## ts_metric
-    '''
-    assert test_abnormal_data.shape[0] > 250
+    assert test_anv.shape[0] > 250
     np.random.seed(0)
-    idx = np.random.randint(0, len(test_abnormal_data), size=100)
-    ts_metric_test_abnormal_data = []
-    ts_metric_test_abnormal_code = []
-    ts_metric_test_abnormal_label = test_abnormal_label[:100]
+    idx = np.random.randint(0, len(test_anv), size=100)
+    ts_metric_test_anv = []
+    ts_metric_test_anc = []
+    ts_metric_test_anl = test_anl[:100]
     for i in idx:
-        ts_metric_test_abnormal_data.append(test_abnormal_data[i])
-        ts_metric_test_abnormal_code.append(test_abnormal_code[i])
-    ts_metric_test_abnormal_data = np.array(ts_metric_test_abnormal_data)
-    ts_metric_test_abnormal_code = np.array(ts_metric_test_abnormal_code)
-    '''
+        ts_metric_test_anv.append(test_anv[i])
+        ts_metric_test_anc.append(test_anc[i])
+    ts_metric_test_anv = np.array(ts_metric_test_anv)
+    ts_metric_test_anc = np.array(ts_metric_test_anc)
     
     # val_normal_data 에는 air_normal_data와 air_abnormal_data가 같이 들어가 있어야 함
     # validation에서 nan을 뱉어내는 오류를 해결하기 위함
@@ -457,6 +455,8 @@ def load_data_v2(opt, _ele_name:str, _size:int):
     # 1차원 데이터는 (Batch, NumofChannel, length) 형식으로 들어가야함
     # 만약 2차원 이미지 데이터였으면 (Batch, Channel, Height, Width)
     train_nv, val_nv, test_nv, val_anv, test_anv = train_nv.reshape(-1, 1, opt.isize), val_nv.reshape(-1, 1, opt.isize), test_nv.reshape(-1, 1, opt.isize), val_anv.reshape(-1, 1, opt.isize), test_anv.reshape(-1, 1, opt.isize)
+    val_nv_anv = val_nv_anv.reshape(-1, 1, opt.isize)
+    ts_metric_test_anv = ts_metric_test_anv.reshape(-1, 1, opt.isize)
     
     train_dataset = TensorDataset(torch.Tensor(train_nv),torch.Tensor(train_nl))  # normal만 들어가있음. 320길이당 라벨이 하나씩 필요하므로 code를 쓰는게 아닌 np.ones를 씀
     test_dataset = TensorDataset(torch.Tensor(test_nv),torch.Tensor(test_nl)) # normal만 들어가있음
@@ -467,15 +467,15 @@ def load_data_v2(opt, _ele_name:str, _size:int):
     val_normal_code_dataset = TensorDataset(torch.Tensor(val_nc),torch.Tensor(val_nl))
     
     # Time-series metric을 위한 TensorDataset
-    # ts_metric_test_abnormal_data_dataset = TensorDataset(torch.Tensor(ts_metric_test_abnormal_data),torch.Tensor(ts_metric_test_abnormal_label))
-    # ts_metric_test_abnormal_code_dataset = TensorDataset(torch.Tensor(ts_metric_test_abnormal_code),torch.Tensor(ts_metric_test_abnormal_label))
+    ts_metric_test_abnormal_data_dataset = TensorDataset(torch.Tensor(ts_metric_test_anv),torch.Tensor(ts_metric_test_anl))
+    ts_metric_test_abnormal_code_dataset = TensorDataset(torch.Tensor(ts_metric_test_anc),torch.Tensor(ts_metric_test_anl))
 
     dataloader = {"train_normal": DataLoader(      # normal
                     dataset=train_dataset,  # torch TensorDataset format
                     batch_size=opt.batchsize,  # mini batch size
                     shuffle=True,
                     num_workers=int(opt.workers),
-                    drop_last=False),
+                    drop_last=True),        # 코드보니까 여기를 True로 놓아야 bse에서 size 차이 안남. 코드상으로 label을 self.opt.batchsize로 주고있어서, 마지막에 input 데이터 크기가 달라지는거 고려안함
 
                 "test_normal": DataLoader(         # normal
                     dataset=test_dataset,  # torch TensorDataset format
@@ -519,19 +519,19 @@ def load_data_v2(opt, _ele_name:str, _size:int):
                     num_workers=int(opt.workers),
                     drop_last=False),
                 
-                # "ts_metric_test_abnormal_data": DataLoader(
-                #     dataset=ts_metric_test_abnormal_data_dataset,  # torch TensorDataset format
-                #     batch_size=opt.batchsize,  # mini batch size
-                #     shuffle=False,
-                #     num_workers=int(opt.workers),
-                #     drop_last=False),
+                "ts_metric_test_abnormal_data": DataLoader(
+                    dataset=ts_metric_test_abnormal_data_dataset,  # torch TensorDataset format
+                    batch_size=opt.batchsize,  # mini batch size
+                    shuffle=False,
+                    num_workers=int(opt.workers),
+                    drop_last=False),
                 
-                # "ts_metric_test_abnormal_code": DataLoader(
-                #     dataset=ts_metric_test_abnormal_code_dataset,  # torch TensorDataset format
-                #     batch_size=opt.batchsize,  # mini batch size
-                #     shuffle=False,
-                #     num_workers=int(opt.workers),
-                #     drop_last=False),
+                "ts_metric_test_abnormal_code": DataLoader(
+                    dataset=ts_metric_test_abnormal_code_dataset,  # torch TensorDataset format
+                    batch_size=opt.batchsize,  # mini batch size
+                    shuffle=False,
+                    num_workers=int(opt.workers),
+                    drop_last=False),
                 }
     # return dataloader, test_normal_filename, test_abnormal_filename
     return dataloader
