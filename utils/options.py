@@ -18,7 +18,7 @@ class Options():
         # Base
         self.parser.add_argument('--dataset', default='NIER', help='normal json files of sensor')
         self.parser.add_argument('--dataroot', default='data/NIER_dataset/PM10/', help='path to dataset, ex) dataset/PM10/')
-        self.parser.add_argument('--batchsize', type=int, default=8, help='input batch size')
+        self.parser.add_argument('--batchsize', type=int, default=64, help='input batch size')
         self.parser.add_argument('--workers', type=int, help='number of data loading workers', default=1)
         self.parser.add_argument('--isize', type=int, default=320, help='input sequence size.')
         self.parser.add_argument('--nc', type=int, default=1, help='input sequence channels')

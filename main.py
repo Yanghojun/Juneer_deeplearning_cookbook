@@ -17,7 +17,7 @@ if __name__ == '__main__':
     opt = Options().parse()
     
     # dataloader, test_normal_filename, test_abnormal_filename = load_data(opt)
-    dataloader = load_data_v2(_ele_name = 'PM10', _size = 320)
+    dataloader = load_data_v2(opt, _ele_name = 'PM10', _size = 320)
     logger.info("Load data success..")
 
     if opt.model == "beatgan":

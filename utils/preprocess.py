@@ -4,6 +4,8 @@ BeatGan preprocess function
 
 import os
 import numpy as np
+from numpy.lib.function_base import delete
+from sklearn.utils import shuffle
 import torch
 from  torch.utils.data import DataLoader,TensorDataset
 from sklearn.model_selection import train_test_split
@@ -24,16 +26,9 @@ def normalize(seq):
     :param seq:
     :return:
     '''
-    try:
-        2*(seq-np.min(seq))/(np.max(seq)-np.min(seq))-1
-    except:
-        print(seq)
-        print(2*(seq-np.min(seq))/(np.max(seq)-np.min(seq))-1)
-        exit()
     return 2*(seq-np.min(seq))/(np.max(seq)-np.min(seq))-1
 
 def load_data(opt):
-    
     # for train data (normal)
     normal_path = sorted(glob.glob(os.path.join(opt.dataroot,"normal", "**","*.json"), recursive=True), key=os.path.getmtime)    # 수정한 날짜 순으로 하면 내가 원하는 파일 순서로 저장됨
     
@@ -318,11 +313,11 @@ def pd_to_class(_ele_name:str, _size:int)->dict:
     logger.info("Finished to change pandas to MStation class..")
     return data
     
-def load_data_v2(_ele_name:str, _size:int):
+def load_data_v2(opt, _ele_name:str, _size:int):
     logger = Logger('load_data')
     
-    norm_data = {'value':[], 'code':[]}
-    anorm_data = {'value':[],'code':[]}
+    norm_data = {'value':[], 'code':[], 'label':[]}     # label은 만약 데이터가 (3, 320)이면 (3, 1) 형태이면서 정상 구간이였으면 0, 비정상이 포함되어 있으면 1로
+    anorm_data = {'value':[],'code':[], 'label':[]}
     
     mstation_set = pd_to_class(_ele_name, _size)
     
@@ -341,10 +336,6 @@ def load_data_v2(_ele_name:str, _size:int):
     anorm_data['value'] = np.array(anorm_data['value'])
     anorm_data['code'] = np.array(anorm_data['code'])
     
-    print(np.isnan(anorm_data['value']))
-    print(np.isnan(anorm_data['value']).sum())
-    print(np.isinf(anorm_data['value']))
-    print(np.isinf(anorm_data['value']).sum())
     logger.info(f"norm_data['value'] {norm_data['value'].shape}, norm_data['code']: {norm_data['code'].shape}")
     logger.info(f"anorm_data['value'] {anorm_data['value'].shape}, anorm_data['code']: {anorm_data['code'].shape}")
     ##
@@ -359,27 +350,74 @@ def load_data_v2(_ele_name:str, _size:int):
     
     for i in range(anorm_data['value'].shape[0]):
         anorm_data['value'][i] = normalize(anorm_data['value'][i])
+    
+    def deleteNan(_value:np.array, _code:np.array)->Union[np.array, np.array]:
+        # 이슈. 한 데이터의 구간 값이 모두 같아서, max, min값이 동일해지고 따라서 normalize 할 때 0으로 나누는 현상이 발생함.
+        # 이를 제거하기 위해 nan이 들어있는 데이터들은 지우겠음
+        deleteIdx = []
+        bool_data = np.isnan(_value)
+        
+        for row in range(len(bool_data)):
+            for col in range(len(bool_data[row])):
+                if bool_data[row][col] == True:
+                    deleteIdx.append(row)
+                    break
+        _value = np.delete(_value, deleteIdx, 0)
+        _code = np.delete(_code, deleteIdx, 0)
+        # logger.info(f'Deleted Index: {deleteIdx}')
+        # logger.info(f'Deleted data shape: {_value.shape}')
+        return _value, _code
+    
+    def change2Binary(_code):
+        """change wrong code to 1
+
+        Args:
+            _code (np.array)
+
+        Returns:
+            np.array
+        """           
+        _code = np.where(_code > 0, 1, 0)
+        return _code
+    
+    norm_data['value'], norm_data['code'] = deleteNan(norm_data['value'], norm_data['code'])
+    anorm_data['value'], anorm_data['code'] = deleteNan(anorm_data['value'], anorm_data['code'])
+    norm_data['code'] = change2Binary(norm_data['code'])
+    anorm_data['code'] = change2Binary(anorm_data['code'])
+    norm_data['label'] = np.zeros(shape=(norm_data['value'].shape[0], 1))
+    anorm_data['label'] = np.ones(shape=(anorm_data['value'].shape[0], 1))
+    
+    logger.info(f"After delete Nan.   norm_data['value'] {norm_data['value'].shape}, norm_data['code']: {norm_data['code'].shape}, norm_data['label']: {norm_data['label'].shape}")
+    logger.info(f"After delete Nan.   anorm_data['value'] {anorm_data['value'].shape}, anorm_data['code']: {anorm_data['code'].shape}, anorm_data['label']: {anorm_data['label'].shape}")
     logger.info("Normalized finished..")
-    exit()
     
     # 2년치(대략 15000시간)에 대한 normalize 한번에 하기
     # air_abnormal_data = normalize(air_abnormal_data)
 
-    # train / test
-    test_normal_data, test_normal_label, train_normal_data,train_normal_label, test_normal_filename, _ = getFloderK(air_normal_data,opt.folder,0, path=air_normal_file_name)      # normal air data에 대해서는 0으로 라벨링
-                                                                                                                                                                            # test_normal_filename: 파일이름이 저장되어 있음
-                                                                                                                                                                            # train_normal_filename도 마찬가지
-    test_normal_code, test_normal_code_label, train_normal_code, train_normal_code_label = getFloderK(air_normal_data_code, opt.folder, 0)  # 나는 단지 air_normal_code를 양식에 맞게 Dataloader에 넣고 싶은 것임
-                                                                                                                                            # 학습에는 얘네 전혀 안쓰임. air_normal_code 값만 살려서 그래프에 띄워주고 싶은것
-    test_abnormal_data, test_abnormal_label, test_abnormal_filename = air_abnormal_data, np.ones((air_abnormal_data.shape[0], 1)), air_abnormal_file_name      # abnormal air data에 대해서는 1로 라벨링
-    test_abnormal_code , test_abnormal_code_label = air_abnormal_data_code, np.ones((air_abnormal_data_code.shape[0], 1))     # 역시나 얘네도 전혀 쓸모 없음. 단지 air_abnormal_data_code를 살리기 위함
-
     # train / val
-    train_normal_data, val_normal_data, train_normal_label, val_normal_label = getPercent(train_normal_data, train_normal_label, 0.1, 0)
-    train_normal_code, val_normal_code, train_normal_code_label, val_normal_code_label = getPercent(train_normal_code, train_normal_code_label, 0.1, 0) # validation에서 일부 testdata를 가져가기 때문에 같은 부분의 code도 가져가게끔 하기 위함. 그래야 맞는 데이터에 맞는 code가 나올 듯
-    test_abnormal_data, val_abnormal_data, test_abnormal_label, val_abnormal_label, test_abnormal_filename, val_abnormal_filename = getPercent(test_abnormal_data, test_abnormal_label, 0.1, 0, path=test_abnormal_filename)
-    test_abnormal_code, val_abnormal_code, test_abnormal_code_label, val_abnormal_code_label = getPercent(test_abnormal_code, test_abnormal_code_label, 0.1, 0)
+    train_norm_data, test_norm_data, val_norm_data = {}, {}, {}
+    test_anorm_data, val_anorm_data = {}, {}        # anorm_data는 train에서는 안쓰임
+    print(norm_data['code'].sum(), anorm_data['code'].sum())
+    train_nv, test_nv, train_nc, test_nc, train_nl, test_nl = train_test_split(norm_data['value'], 
+                                                                               norm_data['code'],      # code는 나중에 ts Metric 적용할 때 쓰임. label에는 안쓰여
+                                                                               norm_data['label'],
+                                                                               test_size=0.2, 
+                                                                               shuffle=True) # nv: norm value / nc: norm code
+    val_nv, test_nv, val_nc, test_nc, val_nl, test_nl = train_test_split(test_nv, 
+                                                        test_nc,
+                                                        test_nl, 
+                                                        test_size=0.3, 
+                                                        shuffle=True)
     
+    val_anv, test_anv, val_anc, test_anc, val_anl, test_anl = train_test_split(anorm_data['value'], 
+                                                            anorm_data['code'],
+                                                            anorm_data['label'],
+                                                            test_size=0.2, 
+                                                            shuffle=True
+                                                            )
+    
+    ## ts_metric
+    '''
     assert test_abnormal_data.shape[0] > 250
     np.random.seed(0)
     idx = np.random.randint(0, len(test_abnormal_data), size=100)
@@ -391,121 +429,112 @@ def load_data_v2(_ele_name:str, _size:int):
         ts_metric_test_abnormal_code.append(test_abnormal_code[i])
     ts_metric_test_abnormal_data = np.array(ts_metric_test_abnormal_data)
     ts_metric_test_abnormal_code = np.array(ts_metric_test_abnormal_code)
+    '''
     
     # val_normal_data 에는 air_normal_data와 air_abnormal_data가 같이 들어가 있어야 함
     # validation에서 nan을 뱉어내는 오류를 해결하기 위함
-    val_data = np.concatenate([val_normal_data, val_abnormal_data])
-    val_label = np.concatenate([val_normal_label, val_abnormal_label])
+    print(val_nv.shape)
+    print(val_anv.shape)
+    val_nv_anv = np.vstack([val_nv, val_anv])      # normal anormal 같이 있으니 이런식으로 변수네이밍
+    print(val_nv_anv.shape)
+    val_nc_anc = np.vstack([val_nc, val_anc])
+    val_nl_anl = np.vstack([val_nl, val_anl])
 
-    print("---------------NORMAL----------------")
-    print("train_normal_data size:{}".format(train_normal_data.shape))
-    print("train_normal_code size:{}".format(train_normal_code.shape))
-    print("test_normal_data size:{}".format(test_normal_data.shape))
-    print("test_normal_code size{}".format(test_normal_code.shape))
-    print("test_normal_filename len:{}".format(len(test_normal_filename)))
-    print("val_normal_data size:{}".format(val_normal_data.shape))
-    print("val_normal_code size:{}".format(val_normal_code.shape))
-    print("---------------ABNORMAL----------------")
-    print("No train data for abnormal")
-    print("test_abnormal_data size:{}".format(test_abnormal_data.shape))
-    print("test_abnormal_code:{}".format(test_abnormal_code.shape))
-    print("test_abnormal_filename len:{}".format(len(test_abnormal_filename)))
-    print("val_abnormal_data size:{}".format(val_abnormal_data.shape))
-    print("val_abnormal_code size:{}".format(val_abnormal_code.shape))        
-    print("---------------NORMAL + ABNORMAL----------------")
-    print("val_data size:{}".format(val_data.shape))
-    print("---------------For Time Series Metric----------------")
-    print("ts_metric_test_abnormal_data:{}".format(ts_metric_test_abnormal_data.shape))
-    print("ts_metric_test_abnormal_code:{}".format(ts_metric_test_abnormal_code.shape))
+    logger.info(f"train_nv size: {train_nv.shape}\n" +
+                f"val_nv_anv size: {val_nv_anv.shape}\n" + 
+                f"test_nv size: {test_nv.shape}\n" + 
+                f"test_anv size: {test_anv.shape}")
     
     # 2021-01-03
     # 데이터 늘렸을때 nan 발생하는 문제 해결하기 위함
     # 아마 데이터들 중 nan 값이 들어있는듯 함
     
-    train_normal_data = np.nan_to_num(train_normal_data)
-    val_normal_data = np.nan_to_num(val_normal_data)
-    test_normal_data = np.nan_to_num(test_normal_data)
-    test_abnormal_data = np.nan_to_num(test_abnormal_data)
+    # train_normal_data = np.nan_to_num(train_normal_data)
+    # val_normal_data = np.nan_to_num(val_normal_data)
+    # test_normal_data = np.nan_to_num(test_normal_data)
+    # test_abnormal_data = np.nan_to_num(test_abnormal_data)
 
-    train_dataset = TensorDataset(torch.Tensor(train_normal_data),torch.Tensor(train_normal_label))  # normal만 들어가있음
-    test_dataset = TensorDataset(torch.Tensor(test_normal_data),torch.Tensor(test_normal_label)) # normal만 들어가있음
-    test_normal_code_dataset = TensorDataset(torch.Tensor(test_normal_code),torch.Tensor(test_normal_code_label))
-    test_abnormal_dataset = TensorDataset(torch.Tensor(test_abnormal_data),torch.Tensor(test_abnormal_label))  # abnormal만 들어가있음
-    test_abnormal_code_dataset = TensorDataset(torch.Tensor(test_abnormal_code),torch.Tensor(test_abnormal_code_label))
-    val_dataset= TensorDataset(torch.Tensor(val_normal_data), torch.Tensor(val_normal_label))    # normal, abnormal 같이 들어가 있음
-    val_normal_code_dataset = TensorDataset(torch.Tensor(val_normal_code),torch.Tensor(val_normal_code_label))
+    # 1차원 데이터는 (Batch, NumofChannel, length) 형식으로 들어가야함
+    # 만약 2차원 이미지 데이터였으면 (Batch, Channel, Height, Width)
+    train_nv, val_nv, test_nv, val_anv, test_anv = train_nv.reshape(-1, 1, opt.isize), val_nv.reshape(-1, 1, opt.isize), test_nv.reshape(-1, 1, opt.isize), val_anv.reshape(-1, 1, opt.isize), test_anv.reshape(-1, 1, opt.isize)
+    
+    train_dataset = TensorDataset(torch.Tensor(train_nv),torch.Tensor(train_nl))  # normal만 들어가있음. 320길이당 라벨이 하나씩 필요하므로 code를 쓰는게 아닌 np.ones를 씀
+    test_dataset = TensorDataset(torch.Tensor(test_nv),torch.Tensor(test_nl)) # normal만 들어가있음
+    test_normal_code_dataset = TensorDataset(torch.Tensor(test_nc),torch.Tensor(test_nl))
+    test_abnormal_dataset = TensorDataset(torch.Tensor(test_anv),torch.Tensor(test_anl))  # abnormal만 들어가있음
+    test_abnormal_code_dataset = TensorDataset(torch.Tensor(test_anc),torch.Tensor(test_anl))
+    val_dataset= TensorDataset(torch.Tensor(val_nv_anv), torch.Tensor(val_nl_anl))    # normal, abnormal 같이 들어가 있음
+    val_normal_code_dataset = TensorDataset(torch.Tensor(val_nc),torch.Tensor(val_nl))
     
     # Time-series metric을 위한 TensorDataset
-    ts_metric_test_abnormal_data_dataset = TensorDataset(torch.Tensor(ts_metric_test_abnormal_data),torch.Tensor(ts_metric_test_abnormal_label))
-    ts_metric_test_abnormal_code_dataset = TensorDataset(torch.Tensor(ts_metric_test_abnormal_code),torch.Tensor(ts_metric_test_abnormal_label))
+    # ts_metric_test_abnormal_data_dataset = TensorDataset(torch.Tensor(ts_metric_test_abnormal_data),torch.Tensor(ts_metric_test_abnormal_label))
+    # ts_metric_test_abnormal_code_dataset = TensorDataset(torch.Tensor(ts_metric_test_abnormal_code),torch.Tensor(ts_metric_test_abnormal_label))
 
     dataloader = {"train_normal": DataLoader(      # normal
                     dataset=train_dataset,  # torch TensorDataset format
                     batch_size=opt.batchsize,  # mini batch size
                     shuffle=True,
                     num_workers=int(opt.workers),
-                    drop_last=True),
+                    drop_last=False),
 
                 "test_normal": DataLoader(         # normal
                     dataset=test_dataset,  # torch TensorDataset format
                     batch_size=opt.batchsize,  # mini batch size
-                    shuffle=False,
+                    shuffle=True,
                     num_workers=int(opt.workers),
                     drop_last=False),
                 
                 "test_normal_code": DataLoader(     
                     dataset=test_normal_code_dataset,  # torch TensorDataset format
                     batch_size=opt.batchsize,  # mini batch size
-                    shuffle=False,
+                    shuffle=True,
                     num_workers=int(opt.workers),
                     drop_last=False),
 
                 "test_abnormal": DataLoader(
                     dataset=test_abnormal_dataset,  # torch TensorDataset format
                     batch_size=opt.batchsize,  # mini batch size
-                    shuffle=False,
+                    shuffle=True,
                     num_workers=int(opt.workers),
                     drop_last=False),
 
                 "test_abnormal_code": DataLoader(
                     dataset=test_abnormal_code_dataset,  # torch TensorDataset format
                     batch_size=opt.batchsize,  # mini batch size
-                    shuffle=False,
+                    shuffle=True,
                     num_workers=int(opt.workers),
                     drop_last=False),
                 
                 "val": DataLoader(
                     dataset=val_dataset,  # torch TensorDataset format
                     batch_size=opt.batchsize,  # mini batch size
-                    shuffle=False,
+                    shuffle=True,
                     num_workers=int(opt.workers),
                     drop_last=False),
                 
                 "val_normal_code": DataLoader(
                     dataset=val_normal_code_dataset,  # torch TensorDataset format
                     batch_size=opt.batchsize,  # mini batch size
-                    shuffle=False,
+                    shuffle=True,
                     num_workers=int(opt.workers),
                     drop_last=False),
                 
-                "ts_metric_test_abnormal_data": DataLoader(
-                    dataset=ts_metric_test_abnormal_data_dataset,  # torch TensorDataset format
-                    batch_size=opt.batchsize,  # mini batch size
-                    shuffle=False,
-                    num_workers=int(opt.workers),
-                    drop_last=False),
+                # "ts_metric_test_abnormal_data": DataLoader(
+                #     dataset=ts_metric_test_abnormal_data_dataset,  # torch TensorDataset format
+                #     batch_size=opt.batchsize,  # mini batch size
+                #     shuffle=False,
+                #     num_workers=int(opt.workers),
+                #     drop_last=False),
                 
-                "ts_metric_test_abnormal_code": DataLoader(
-                    dataset=ts_metric_test_abnormal_code_dataset,  # torch TensorDataset format
-                    batch_size=opt.batchsize,  # mini batch size
-                    shuffle=False,
-                    num_workers=int(opt.workers),
-                    drop_last=False),
+                # "ts_metric_test_abnormal_code": DataLoader(
+                #     dataset=ts_metric_test_abnormal_code_dataset,  # torch TensorDataset format
+                #     batch_size=opt.batchsize,  # mini batch size
+                #     shuffle=False,
+                #     num_workers=int(opt.workers),
+                #     drop_last=False),
                 }
-    return dataloader, test_normal_filename, test_abnormal_filename
-# test_air_x, test_air_y, train_air_x, train_air_y 로 분할하기 위한 함수
-# 정상인 데이터로도 테스트를 진행해 봐야함
-# 테스트 데이터의 모든 부분이 비정상인것은 절대 아님. 테스트 데이터의 아주 일부분이 비정상적 패턴을 가지고 있는것임
+    # return dataloader, test_normal_filename, test_abnormal_filename
+    return dataloader
 
 def getFloderK(data, folder, label, path=None):
     """[데이터 나눠주는 함수]

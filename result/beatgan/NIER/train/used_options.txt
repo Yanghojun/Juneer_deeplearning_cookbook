@@ -1,5 +1,5 @@
 ------------ Options -------------
-batchsize: 8
+batchsize: 64
 beta1: 0.5
 dataroot: data/NIER_dataset/PM10/
 dataset: NIER
