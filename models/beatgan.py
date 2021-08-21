@@ -1,3 +1,4 @@
+from numpy.lib.npyio import save
 from utils import metric as ts_metric       # 이거 from ..utils import metric as ts_metric으로 구성해야 할 줄 알았는데 main에서 실행하는것이니 경로를 main.py 기준으로 짜야하는듯?
                                             # print(sys.path)를 통해서 main.py가 중심임을 알 수 있음.
                                             
@@ -243,7 +244,11 @@ class AD_MODEL(object):
 
     def analysisRes(self, N_res, A_res, min_score, max_score, threshold, save_dir):
         '''
-
+        dist0_NA.png, dist0_Nair_abnormal.png, logdist0_NA.png, logdist0_Nair_abnormal.png 파일 만드는 함수        
+        TP, FP, TN, FN 이거 출력도 여기서 해줌
+        res_th는 opt.threshold 값. default = 0.05
+        normal 데이터의 error, abnormal 데이터의 error를 같이 보냄
+        
         :param N_res: list of normal score
         :param A_res:  dict{ "S": list of S score, "V":...}
         :param min_score:
@@ -428,7 +433,7 @@ class BeatGAN(AD_MODEL):
         self.G.train()
         self.D.train()
         epoch_iter = 0
-        for data in self.dataloader["train_normal"]:
+        for data in self.dataloader["train_nv_set"]:
             self.total_steps += self.opt.batchsize
             epoch_iter += 1
 
@@ -443,7 +448,7 @@ class BeatGAN(AD_MODEL):
             if (epoch_iter % self.opt.print_freq) == 0:
 
                 print("Epoch: [%d] [%4d/%4d] D_loss(R/F): %.6f/%.6f, G_loss: %.6f" %
-                      ((self.cur_epoch), (epoch_iter), self.dataloader["train_normal"].dataset.__len__() // self.batchsize,
+                      ((self.cur_epoch), (epoch_iter), self.dataloader["train_nv_set"].dataset.__len__() // self.batchsize,
                        errors["err_d_real"], errors["err_d_fake"], errors["err_g"]))
                 # print("err_adv:{}  ,err_rec:{}  ,err_enc:{}".format(errors["err_g_adv"],errors["err_g_rec"],errors["err_g_enc"]))
 
@@ -569,7 +574,7 @@ class BeatGAN(AD_MODEL):
         #     self.dataloader["val"], self.dataloader["val_normal_code"], scale=False)
         
         y_, y_pred = self.predict(
-            self.dataloader["val"], self.dataloader["val_normal_code"], scale=False)
+            self.dataloader["val_nv_anv_set"], self.dataloader["val_nc_set"], scale=False)
         
         rocprc, rocauc, best_th, best_f1 = beatgan_ori_evaluate(y_, y_pred)
         return rocauc, best_th, best_f1
@@ -650,17 +655,18 @@ class BeatGAN(AD_MODEL):
 
             return y_, y_pred,y_pred_for_timeseries_metric, y_pred_for_timeseries_label
 
-    def predict_for_right(self, dataloader_, dataloader_code_, min_score, max_score, threshold, save_dir, filename = None, ):
-        '''
+    def draw_test_result(self, dataloader_, dataloader_code_, min_score, max_score, threshold, save_dir, filename=None):
+        """테스트 결과 그림 그려주는 함수. False(0)가 정상. Positive(1)가 비정상
 
-        :param dataloader:
-        :param dataloader_code: code가 들어있는 데이터로더
-        :param min_score:
-        :param max_score:
-        :param threshold:
-        :param save_dir:
-        :return:
-        '''
+        Args:
+            dataloader_ ([type]): [description]
+            dataloader_code_ ([type]): [description]
+            min_score ([type]): [description]
+            max_score ([type]): [description]
+            threshold ([type]): [description]
+            save_dir ([type]): [description]
+            filename ([type], optional): [description]. Defaults to None.
+        """        
         assert save_dir is not None
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
@@ -703,20 +709,30 @@ class BeatGAN(AD_MODEL):
                                           * i:data[0][0].shape[0]*i+data[0][0].shape[0]]
 
                 ano_score = error.cpu().numpy()
+                
                 assert batch_output.shape[0] == batch_input.shape[0] == ano_score.shape[0]
+                
+                tp_dir = os.path.split(save_dir)[-1]    # 파일 이름에 따라서 어떤 그림을 만들지 정하기 위함.
                 for idx in range(batch_input.shape[0]):
-                    if len(test_pair) >= 10:  # 100장의 이상의 png 파일을 만들지 않기 위함
-                        break
-                    normal_score = (
-                        ano_score[idx]-min_score)/(max_score-min_score)
+                    # if len(test_pair) > 100:  # 100장의 이상의 png 파일을 만들지 않기 위함
+                    #     break
+                    normal_score = (ano_score[idx]-min_score)/(max_score-min_score)
 
-                    # if normal_score<threshold:
-                    '''
-                    모델이 Normal로 생각하는것만 저장하게끔 하는 if문인데 테스트 데이터 싹다 저장하게끔 하기 위해 if문 주석처리 
-                    (threshold보다 높은 score를 가진 경우 비정상이라고 칭하고,이 비정상이 Positive임)
-                    '''
-                    test_pair.append((batch_input[idx], batch_output[idx]))
-                    code.append(batch_code[idx])
+                    if normal_score<=threshold and tp_dir == "Normal_Data_Predicted_As_Normal - (TN)":
+                        test_pair.append((batch_input[idx], batch_output[idx]))
+                        code.append(batch_code[idx])
+                        
+                    elif normal_score>threshold and tp_dir == "Normal_Data_Predicted_As_Anormal - (FP)":
+                        test_pair.append((batch_input[idx], batch_output[idx]))
+                        code.append(batch_code[idx])
+                        
+                    elif normal_score<=threshold and tp_dir == "Anormal_Data_Predicted_As_Normal - (FN)":
+                        test_pair.append((batch_input[idx], batch_output[idx]))
+                        code.append(batch_code[idx])
+                        
+                    elif normal_score>threshold and tp_dir == "Anormal_Data_Predicted_As_Anormal - (TP)":
+                        test_pair.append((batch_input[idx], batch_output[idx]))
+                        code.append(batch_code[idx])
                     
                     if filename == None:
                         pass
@@ -727,7 +743,9 @@ class BeatGAN(AD_MODEL):
             if filename == None:
                 self.saveTestPair(pair=test_pair, code=code, save_dir=save_dir)
             else:    
-                self.saveTestPair(test_pair, code, chosen_filename, save_dir)
+                self.saveTestPair(pair=test_pair, code=code, save_dir=save_dir, filename=chosen_filename)
+                
+                
 
     def ts_evaluation(self, diff_of_score, label, threshold):
         """[타임시리즈 평가법으로 성능 평가하는 함수]
@@ -768,7 +786,7 @@ class BeatGAN(AD_MODEL):
         print("precision: ", precision_middle, "recall: ",
               recall_middle, "f1: ", f1_middle)
         # precision_middle, recall_middle, f1_middle = ts_metric.evaluate(gt_label, binary)    # 리스트 2개로 넘겨줘야함
-    def ori_test_type(self):
+    def ori_test(self):
         self.G.eval()
         self.D.eval()
         res_th = self.opt.threshold
@@ -777,14 +795,12 @@ class BeatGAN(AD_MODEL):
 
         if not os.path.exists(save_dir):
             os.makedirs(save_dir)
-        # y_air, y_pred_air, normal_ts_metric_score, normal_ts_label = self.predict(self.dataloader["test_normal"],
-        #                                                                           self.dataloader["test_normal_code"],
-        #                                                                           scale=False)   # y_pred_air 변수에는 테스트 이미지 100장이면 100개의 점수
-        y_air, y_pred_air, _, _ = self.predict(self.dataloader["test_normal"],
-                                         self.dataloader["test_normal_code"],
+            
+        y_air, y_pred_air, _, _ = self.predict(self.dataloader["test_nv_set"],
+                                         self.dataloader["test_nc_set"],
                                          scale=False)
-        y_air_abnormal, y_pred_air_abnormal, _, _ = self.predict(self.dataloader["test_abnormal"],
-                                                           self.dataloader["test_abnormal_code"],
+        y_air_abnormal, y_pred_air_abnormal, _, _ = self.predict(self.dataloader["test_anv_set"],
+                                                           self.dataloader["test_anc_set"],
                                                            scale=False)
         
         over_all = np.concatenate([y_pred_air, y_pred_air_abnormal])
@@ -795,110 +811,40 @@ class BeatGAN(AD_MODEL):
             "Score_of_abnormal": y_pred_air_abnormal,
         }
 
-        # self.analysisRes(y_pred_N,A_res,min_score,max_score,res_th,save_dir)
-        # dist0_NA.png, dist0_Nair_abnormal.png, logdist0_NA.png, logdist0_Nair_abnormal.png 파일 만드는 함수
-        # TP, FP, TN, FN 이거 출력도 여기서 해줌
-        # normal 데이터의 error, abnormal 데이터의 error를 같이 보냄
-        self.analysisRes(y_pred_air, A_res, min_score,max_score, res_th, save_dir)
-        # res_th는 opt.threshold 값. default = 0.05
-
-        self.predict_for_right(self.dataloader["test_abnormal"], 
-                               self.dataloader["test_abnormal_code"], 
-                               min_score,
-                               max_score, 
-                               res_th, 
-                               save_dir=os.path.join(save_dir, "Model_predict_Abnormal_as_normal"))
-        self.predict_for_right(self.dataloader["test_normal"], 
-                               self.dataloader["test_normal_code"],
+        
+        self.analysisRes(y_pred_air, A_res, min_score,max_score, res_th, save_dir) 
+        
+        self.draw_test_result(self.dataloader["test_nv_set"], 
+                               self.dataloader["test_nc_set"],
                                min_score, 
                                max_score, 
                                res_th, 
-                               save_dir=os.path.join(save_dir, "Model_predict_normal_as_normal"))  
+                               save_dir=os.path.join(save_dir, "Normal_Data_Predicted_As_Normal - (TN)"))
+        
+        self.draw_test_result(self.dataloader["test_nv_set"], 
+                               self.dataloader["test_nc_set"],
+                               min_score, 
+                               max_score, 
+                               res_th, 
+                               save_dir=os.path.join(save_dir, "Normal_Data_Predicted_As_Anormal - (FP)"))  
+        
+        self.draw_test_result(self.dataloader["test_anv_set"], 
+                               self.dataloader["test_anc_set"], 
+                               min_score,
+                               max_score, 
+                               res_th, 
+                               save_dir=os.path.join(save_dir, "Anormal_Data_Predicted_As_Normal - (FN)"))
+        
+        self.draw_test_result(self.dataloader["test_anv_set"], 
+                               self.dataloader["test_anc_set"], 
+                               min_score,
+                               max_score, 
+                               res_th, 
+                               save_dir=os.path.join(save_dir, "Anormal_Data_Predicted_As_Anormal - (TP)"))
+        
+        
 
         aucprc, aucroc, best_th, best_f1 = beatgan_ori_evaluate(
-            over_all_gt, (over_all-min_score)/(max_score-min_score))
-        print("#############################")
-        print("########  Result  ###########")
-        print("ap:{}".format(aucprc))
-        print("auc:{}".format(aucroc))
-        print("best th:{} --> best f1:{}".format(best_th, best_f1))
-
-        with open(os.path.join(save_dir, "res-record.txt"), 'w') as f:
-            f.write("auc_prc:{}\n".format(aucprc))
-            f.write("auc_roc:{}\n".format(aucroc))
-            f.write("best th:{} --> best f1:{}".format(best_th, best_f1))
-        
-    def test_type(self, test_normal_filename, test_abnormal_filename):
-        self.G.eval()
-        self.D.eval()
-        res_th = self.opt.threshold
-        save_dir = os.path.join(self.outf, self.model,
-                                self.dataset, "test", str(self.opt.folder))
-
-        if not os.path.exists(save_dir):
-            os.makedirs(save_dir)
-        # y_air, y_pred_air, normal_ts_metric_score, normal_ts_label = self.predict(self.dataloader["test_normal"],
-        #                                                                           self.dataloader["test_normal_code"],
-        #                                                                           scale=False)   # y_pred_air 변수에는 테스트 이미지 100장이면 100개의 점수
-
-        y_air, y_pred_air, normal_ts_metric_score, normal_ts_label = self.predict(self.dataloader["val"],
-                                                                                  self.dataloader["val_normal_code"],
-                                                                                  scale=False)   # time-series metric에 gt label에 0, 1 다 포함되어야함. normal code에는 전부 0 이라서.. 그냥 val 데이터 가져오는걸로 결정
-        y_air_abnormal, y_pred_air_abnormal, abnormal_ts_metric_score, abnormal_ts_label = self.predict(self.dataloader["test_abnormal"],
-                                                                                                        self.dataloader[
-                                                                                                            "test_abnormal_code"],
-                                                                                                        scale=False)
-        over_all = np.concatenate([y_pred_air, y_pred_air_abnormal])
-        over_all_gt = np.concatenate([y_air, y_air_abnormal])
-        min_score, max_score = np.min(over_all), np.max(over_all)
-
-        A_res = {
-            "Score_of_abnormal": y_pred_air_abnormal,
-        }
-
-        # self.analysisRes(y_pred_N,A_res,min_score,max_score,res_th,save_dir)
-        # dist0_NA.png, dist0_Nair_abnormal.png, logdist0_NA.png, logdist0_Nair_abnormal.png 파일 만드는 함수
-        # TP, FP, TN, FN 이거 출력도 여기서 해줌
-        # normal 데이터의 error, abnormal 데이터의 error를 같이 보냄
-        self.analysisRes(y_pred_air, A_res, min_score,
-                         max_score, res_th, save_dir)
-        # res_th는 opt.threshold 값. default = 0.05
-
-        # Timeseries metric 함수
-        self.ts_evaluation(normal_ts_metric_score, normal_ts_label,
-                           abnormal_ts_metric_score, abnormal_ts_label, res_th)
-
-        #save fig for Interpretable
-        # if filename == None:
-        #     self.predict_for_right(self.dataloader["test_abnormal"], 
-        #                            self.dataloader["test_abnormal_code"], 
-        #                            min_score,
-        #                            max_score, 
-        #                            res_th, 
-        #                            save_dir=os.path.join(save_dir, "Model_predict_Abnormal_as_normal"))
-        #     self.predict_for_right(self.dataloader["test_normal"], 
-        #                            self.dataloader["test_normal_code"],
-        #                            min_score, 
-        #                            max_score, 
-        #                            res_th, 
-        #                            save_dir=os.path.join(save_dir, "Model_predict_normal_as_normal"))  
-        # else:
-        #     self.predict_for_right(self.dataloader["test_abnormal"],
-        #                            self.dataloader["test_abnormal_code"],
-        #                            min_score,
-        #                            max_score, 
-        #                            res_th, 
-        #                            save_dir=os.path.join(save_dir, "Model_predict_Abnormal_as_normal"),
-        #                            test_abnormal_filename)  
-        #     self.predict_for_right(self.dataloader["test_normal"], 
-        #                            self.dataloader["test_normal_code"], 
-        #                            min_score,
-        #                            max_score, 
-        #                            res_th, 
-        #                            save_dir=os.path.join(save_dir, "Model_predict_normal_as_normal"),
-        #                            test_normal_filename)  
-
-        aucprc, aucroc, best_th, best_f1 = evaluate(
             over_all_gt, (over_all-min_score)/(max_score-min_score))
         print("#############################")
         print("########  Result  ###########")
@@ -932,21 +878,17 @@ class BeatGAN(AD_MODEL):
         end = time.time()
         print((end-start)/size)
 
-    def test_with_ts_metric(self):
+    def ts_test(self):
         self.G.eval()
         self.D.eval()
         res_th = self.opt.threshold
-
-        # _, _, score, label = self.predict(self.dataloader["test_abnormal"],
-        #                                   self.dataloader["test_abnormal_code"],
+        
+        # _, _, score, label = self.predict(self.dataloader["ts_test_anv_set"],
+        #                                   self.dataloader["ts_test_anc_set"],
         #                                   scale=False)
-
-        # _, _, score, label = self.predict(self.dataloader["val"],
-        #                                   self.dataloader["val_normal_code"],
-        #                                   scale=False)
-
-        _, _, score, label = self.predict(self.dataloader["ts_metric_test_abnormal_data"],
-                                          self.dataloader["ts_metric_test_abnormal_code"],
+        
+        _, _, score, label = self.predict(self.dataloader["test_anv_set"],
+                                          self.dataloader["test_anc_set"],
                                           scale=False)
 
         # Timeseries metric 함수
@@ -968,8 +910,8 @@ class BeatGAN(AD_MODEL):
         save_dir = os.path.join(self.outf, self.model,
                                 self.dataset, "test", str(self.opt.folder))
 
-        dataloader_ = self.dataloader["test_normal"]
-        dataloader_code_ = self.dataloader["test_normal_code"]
+        dataloader_ = self.dataloader["test_nv_set"]
+        dataloader_code_ = self.dataloader["test_nc_set"]
 
         with torch.no_grad():
             self.an_scores = torch.zeros(
