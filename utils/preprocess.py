@@ -18,7 +18,8 @@ import gzip
 import pickle
 from utils.log import Logger
 
-np.random.seed(42)
+seed = 42
+np.random.seed(seed)
 
 def normalize(seq):
     '''
@@ -38,7 +39,7 @@ class MStation():
         
     def getNorm(self):
         """ Get normal data of normal code range.
-        but I don't dropout columns didn't selected.
+        but I didn't dropout columns didn't selected.
         For future using
 
         Returns:
@@ -86,7 +87,7 @@ def pd_to_class(_ele_name:str, _size:int)->dict:
         
     # delete unimportant columns
     measure_id = ori_data.keys()
-    cols = ['MDATETIEM','SO2', 'SO2_CODE', 'CO', 'CO_CODE', 'O3', 'O3_CODE', 'PM10', 'PM10_CODE',
+    cols = ['MDATETIEM','AREA_INDEX', 'TIME_INDEX', 'SO2', 'SO2_CODE', 'CO', 'CO_CODE', 'O3', 'O3_CODE', 'PM10', 'PM10_CODE',
                 'PM25', 'PM25_CODE', 'NO', 'NO_CODE', 'NO2', 'NO2_CODE', 'NOX', 'NOX_CODE']
     for idx in measure_id:
         sample = ori_data[idx]
@@ -101,33 +102,39 @@ def pd_to_class(_ele_name:str, _size:int)->dict:
 def load_data(opt, _ele_name:str, _size:int):
     logger = Logger('load_data')
     
-    norm_data = {'value':[], 'code':[], 'label':[]}     # label은 만약 데이터가 (3, 320)이면 (3, 1) 형태이면서 정상 구간이였으면 0, 비정상이 포함되어 있으면 1로
-    anorm_data = {'value':[],'code':[], 'label':[]}
+    norm_data = {'time':[], 'area':[], 'value':[], 'code':[], 'label':[]}     # label은 만약 데이터가 (3, 320)이면 (3, 1) 형태이면서 정상 구간이였으면 0, 비정상이 포함되어 있으면 1로
+    anorm_data = {'time':[], 'area':[], 'value':[], 'code':[], 'label':[]}
     
     mstation_set = pd_to_class(_ele_name, _size)
     
     ## get norm_data, anorm_data
     for id in mstation_set.keys():
         for norm in mstation_set[id].getNorm().values():
+            norm_data['time'].append(norm['TIME_INDEX'].to_numpy())
+            norm_data['area'].append(norm['AREA_INDEX'].to_numpy())
             norm_data['value'].append(norm[_ele_name].to_numpy())
             norm_data['code'].append(norm[_ele_name+'_CODE'].to_numpy())
             
-        for anorm in mstation_set[id].getAnorm().values():            
+        for anorm in mstation_set[id].getAnorm().values():
+            anorm_data['time'].append(anorm['TIME_INDEX'].to_numpy())
+            anorm_data['area'].append(anorm['AREA_INDEX'].to_numpy())            
             anorm_data['value'].append(anorm[_ele_name].to_numpy())
             anorm_data['code'].append(anorm[_ele_name+'_CODE'].to_numpy())
-            
+    
+    # change DataFrame to Numpy
+    norm_data['time'] = np.array(norm_data['time'])
+    norm_data['area'] = np.array(norm_data['area'])
     norm_data['value'] = np.array(norm_data['value'])
     norm_data['code'] = np.array(norm_data['code'])
+    # change DataFrame to Numpy
+    anorm_data['time'] = np.array(anorm_data['time'])
+    anorm_data['area'] = np.array(anorm_data['area'])
     anorm_data['value'] = np.array(anorm_data['value'])
     anorm_data['code'] = np.array(anorm_data['code'])
-    
-    logger.info(f"norm_data['value'] {norm_data['value'].shape}, norm_data['code']: {norm_data['code'].shape}")
-    logger.info(f"anorm_data['value'] {anorm_data['value'].shape}, anorm_data['code']: {anorm_data['code'].shape}")
 
-    # norm_data['value'] normalize 320시간 간격으로 하기
+    norm_data['value'] # normalize 320시간 간격으로 하기
     for i in range(norm_data['value'].shape[0]):
         norm_data['value'][i] = normalize(norm_data['value'][i])
-            # air_normal_data[i][j]=normalize(air_normal_data[i][j][:])
     
     # 2년치(대략 15000시간)에 대한 normalize 한번에 하기
     # air_normal_data = normalize(air_normal_data)
@@ -135,7 +142,7 @@ def load_data(opt, _ele_name:str, _size:int):
     for i in range(anorm_data['value'].shape[0]):
         anorm_data['value'][i] = normalize(anorm_data['value'][i])
     
-    def deleteNan(_value:np.array, _code:np.array)->Union[np.array, np.array]:
+    def deleteNan(_time:np.array, _area:np.array, _value:np.array, _code:np.array)->Union[np.array, np.array, np.array, np.array]:
         # 이슈. 한 데이터의 구간 값이 모두 같아서, max, min값이 동일해지고 따라서 normalize 할 때 0으로 나누는 현상이 발생함.
         # 이를 제거하기 위해 nan이 들어있는 데이터들은 지우겠음
         deleteIdx = []
@@ -146,10 +153,13 @@ def load_data(opt, _ele_name:str, _size:int):
                 if bool_data[row][col] == True:
                     deleteIdx.append(row)
                     break
+        
+        _time = np.delete(_time, deleteIdx, 0)
+        _area = np.delete(_area, deleteIdx, 0)
         _value = np.delete(_value, deleteIdx, 0)
         _code = np.delete(_code, deleteIdx, 0)
         
-        return _value, _code
+        return _time, _area, _value, _code
     
     def change2Binary(_code):
         """change wrong code to 1
@@ -163,8 +173,8 @@ def load_data(opt, _ele_name:str, _size:int):
         _code = np.where(_code > 0, 1, 0)
         return _code
     
-    norm_data['value'], norm_data['code'] = deleteNan(norm_data['value'], norm_data['code'])
-    anorm_data['value'], anorm_data['code'] = deleteNan(anorm_data['value'], anorm_data['code'])
+    norm_data['time'], norm_data['area'], norm_data['value'], norm_data['code'] = deleteNan(norm_data['time'], norm_data['area'], norm_data['value'], norm_data['code'])
+    anorm_data['time'], anorm_data['area'], anorm_data['value'], anorm_data['code'] = deleteNan(anorm_data['time'], anorm_data['area'], anorm_data['value'], anorm_data['code'])
     norm_data['code'] = change2Binary(norm_data['code'])
     anorm_data['code'] = change2Binary(anorm_data['code'])
     norm_data['label'] = np.zeros(shape=(norm_data['value'].shape[0], 1))
@@ -173,22 +183,49 @@ def load_data(opt, _ele_name:str, _size:int):
     
     logger.info("Normalize finished and Deleted Nan data..")
 
-    train_nv, test_nv, train_nc, test_nc, train_nl, test_nl = train_test_split(norm_data['value'], 
-                                                                               norm_data['code'],      # code는 나중에 ts Metric 적용할 때 쓰임. label에는 안쓰여
-                                                                               norm_data['label'],
-                                                                               test_size=0.2, 
-                                                                               shuffle=True) # nv: norm value / nc: norm code
-    val_nv, test_nv, val_nc, test_nc, val_nl, test_nl = train_test_split(test_nv, 
-                                                                         test_nc,
-                                                                         test_nl, 
-                                                                         test_size=0.3, 
-                                                                         shuffle=True)
+    _, test_nt, _, test_na, train_nv, test_nv, train_nc, test_nc, train_nl, test_nl = train_test_split(norm_data['time'],
+                                                                                                        norm_data['area'],
+                                                                                                        norm_data['value'], 
+                                                                                                        norm_data['code'],      # code는 나중에 ts Metric 적용할 때 쓰임. label에는 안쓰여
+                                                                                                        norm_data['label'],
+                                                                                                        test_size=0.2,
+                                                                                                        random_state = seed,  
+                                                                                                        shuffle=True) # nv: norm value / nc: norm code
+    _, test_nt, _, test_na, val_nv, test_nv, val_nc, test_nc, val_nl, test_nl = train_test_split(test_nt,
+                                                                                                 test_na,
+                                                                                                 test_nv, 
+                                                                                                 test_nc,
+                                                                                                 test_nl, 
+                                                                                                 test_size=0.3, 
+                                                                                                 random_state = seed,  
+                                                                                                 shuffle=True)
     
-    val_anv, test_anv, val_anc, test_anc, val_anl, test_anl = train_test_split(anorm_data['value'], 
-                                                                               anorm_data['code'],
-                                                                               anorm_data['label'],
-                                                                               test_size=0.08,     # Normal data와 갯수를 맞춰주기 위함
-                                                                               shuffle=True)
+    
+    
+    _, test_ant, _, test_ana, val_anv, test_anv, val_anc, test_anc, val_anl, test_anl = train_test_split(anorm_data['time'],
+                                                                                                         anorm_data['area'],
+                                                                                                         anorm_data['value'], 
+                                                                                                         anorm_data['code'],
+                                                                                                         anorm_data['label'],
+                                                                                                         test_size=0.08,     # Normal data와 갯수를 맞춰주기 위함
+                                                                                                         random_state = seed,  
+                                                                                                         shuffle=True)
+    
+    def numpySave(norm_time, norm_area, norm_value, norm_code, anorm_time, anorm_area, anorm_value, anorm_code, save=None):
+        data = {'norm_time':norm_time, 
+                'nore_area':norm_area, 
+                'norm_value':norm_value, 
+                'norm_code':norm_code, 
+                'anorm_time':anorm_time, 
+                'anorm_area':anorm_area, 
+                'anorm_value':anorm_value, 
+                'anorm_code':anorm_code}
+        
+        if save:
+            with gzip.open('./data_for_pycaret.pickle', 'wb') as f:
+                pickle.dump(data, f)
+    
+    numpySave(test_nt, test_na, test_nv, test_nc, test_ant, test_ana, test_anv, test_anc, save=False)
     
     ## ts_metric
     # assert test_anv.shape[0] > 250      # 이게 왜 있는건지 모르겠네
@@ -236,7 +273,8 @@ def load_data(opt, _ele_name:str, _size:int):
     test_nc_set = TensorDataset(torch.Tensor(test_nc),torch.Tensor(test_nl))
     test_anv_set = TensorDataset(torch.Tensor(test_anv),torch.Tensor(test_anl))  # abnormal만 들어가있음
     test_anc_set = TensorDataset(torch.Tensor(test_anc),torch.Tensor(test_anl))
-    val_nv_anv_set= TensorDataset(torch.Tensor(val_nv_anv), torch.Tensor(val_nl_anl))    # normal, abnormal 같이 들어가 있음
+    val_nv_anv_set = TensorDataset(torch.Tensor(val_nv_anv), torch.Tensor(val_nl_anl))    # normal, abnormal 같이 들어가 있음
+    val_nc_anc_set = TensorDataset(torch.Tensor(val_nc_anc), torch.Tensor(val_nl_anl))    # normal, abnormal 같이 들어가 있음
     val_nc_set = TensorDataset(torch.Tensor(val_nc),torch.Tensor(val_nl))
     
     # Time-series metric을 위한 TensorDataset
@@ -280,6 +318,13 @@ def load_data(opt, _ele_name:str, _size:int):
                 
                 "val_nv_anv_set": DataLoader(
                     dataset=val_nv_anv_set,  # torch TensorDataset format
+                    batch_size=opt.batchsize,  # mini batch size
+                    shuffle=True,
+                    num_workers=int(opt.workers),
+                    drop_last=False),
+                
+                "val_nc_anc_set": DataLoader(
+                    dataset=val_nc_anc_set,  # torch TensorDataset format
                     batch_size=opt.batchsize,  # mini batch size
                     shuffle=True,
                     num_workers=int(opt.workers),

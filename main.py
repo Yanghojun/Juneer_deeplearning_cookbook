@@ -32,11 +32,13 @@ if __name__ == '__main__':
         model.train()
     else:
         logger.info("Test start...")
-        model.load()        # BeatGan이 상속하고 있는 (상속하다 == 재산을 물려받다) AD_MODEL에 있는 load 함수
+        model.load()        # BeatGan이 상속하고 있는 (상속하다 == 재산을 물려받다) AD_MODEL에 있는 load 함수    
         
-        model.ori_test()
+        if opt.ts:
+            model.ts_test()
+        else:
+            model.ori_test()
         
-        # model.ts_test()
         # model.test_time()
         # model.plotTestFig()
         # print("threshold:{}\tf1-score:{}\tauc:{}".format( th, f1, auc))

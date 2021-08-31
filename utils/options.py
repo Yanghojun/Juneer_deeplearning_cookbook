@@ -43,6 +43,7 @@ class Options():
 
         ## Test
         self.parser.add_argument('--istest', action='store_true',help='train model or test model')
+        self.parser.add_argument('--ts', action='store_true',help='train model or test model')
         self.parser.add_argument('--threshold', type=float, default=0.05, help='threshold score for anomaly')
         self.opt = None
 
