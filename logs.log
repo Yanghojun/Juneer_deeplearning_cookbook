@@ -489,3 +489,282 @@
 2021-09-01 19:36:09,785:INFO:Copying data
 2021-09-01 19:36:09,786:INFO:(15360, 3)
 2021-09-01 19:36:09,786:INFO:assign_model() succesfully completed......................................
+2021-09-01 20:34:59,869:INFO:Initializing create_model()
+2021-09-01 20:34:59,869:INFO:create_model(estimator=lof, num_clusters=4, fraction=0.1, ground_truth=None, round=4, fit_kwargs=None, verbose=True, system=True, raise_num_clusters=False, display=None, kwargs={})
+2021-09-01 20:34:59,869:INFO:Checking exceptions
+2021-09-01 20:34:59,870:INFO:Preparing display monitor
+2021-09-01 20:34:59,886:INFO:Importing libraries
+2021-09-01 20:34:59,894:INFO:Importing untrained model
+2021-09-01 20:34:59,903:INFO:Local Outlier Factor Imported succesfully
+2021-09-01 20:34:59,912:INFO:Fitting Model
+2021-09-01 20:35:00,014:INFO:LOF(algorithm='auto', contamination=0.1, leaf_size=30, metric='minkowski',
+  metric_params=None, n_jobs=-1, n_neighbors=20, novelty=False, p=2)
+2021-09-01 20:35:00,014:INFO:create_models() succesfully completed......................................
+2021-09-01 20:35:00,015:INFO:Uploading results into container
+2021-09-01 20:35:00,016:INFO:Uploading model into container now
+2021-09-01 20:35:00,016:INFO:create_model_container: 2
+2021-09-01 20:35:00,016:INFO:master_model_container: 2
+2021-09-01 20:35:00,016:INFO:display_container: 3
+2021-09-01 20:35:00,016:INFO:LOF(algorithm='auto', contamination=0.1, leaf_size=30, metric='minkowski',
+  metric_params=None, n_jobs=-1, n_neighbors=20, novelty=False, p=2)
+2021-09-01 20:35:00,016:INFO:create_model() succesfully completed......................................
+2021-09-01 20:35:00,183:INFO:Initializing assign_model()
+2021-09-01 20:35:00,183:INFO:assign_model(model=LOF(algorithm='auto', contamination=0.1, leaf_size=30, metric='minkowski',
+  metric_params=None, n_jobs=-1, n_neighbors=20, novelty=False, p=2), transformation=False, score=True, verbose=True)
+2021-09-01 20:35:00,183:INFO:Checking exceptions
+2021-09-01 20:35:00,183:INFO:Determining Trained Model
+2021-09-01 20:35:00,183:INFO:Trained Model : Local Outlier Factor
+2021-09-01 20:35:00,183:INFO:Copying data
+2021-09-01 20:35:00,184:INFO:(15360, 3)
+2021-09-01 20:35:00,184:INFO:assign_model() succesfully completed......................................
+2021-09-01 20:36:08,486:INFO:Initializing create_model()
+2021-09-01 20:36:08,486:INFO:create_model(estimator=sod, num_clusters=4, fraction=0.1, ground_truth=None, round=4, fit_kwargs=None, verbose=True, system=True, raise_num_clusters=False, display=None, kwargs={})
+2021-09-01 20:36:08,486:INFO:Checking exceptions
+2021-09-01 20:36:08,486:INFO:Preparing display monitor
+2021-09-01 20:36:08,506:INFO:Importing libraries
+2021-09-01 20:36:08,517:INFO:Importing untrained model
+2021-09-01 20:36:08,527:WARNING:create_model_unsupervised() for SOD(alpha=None, contamination=0.1, n_neighbors=None, ref_set=None) raised an exception when cloning:
+2021-09-01 20:36:08,558:WARNING:Traceback (most recent call last):
+  File "C:\Users\hojun_window\AppData\Roaming\Python\Python38\site-packages\pycaret\internal\tabular.py", line 2610, in create_model_unsupervised
+    model = clone(model)
+  File "C:\ANACONDA3\envs\beatgan\lib\site-packages\sklearn\utils\validation.py", line 72, in inner_f
+    return f(**kwargs)
+  File "C:\ANACONDA3\envs\beatgan\lib\site-packages\sklearn\base.py", line 88, in clone
+    new_object = klass(**new_object_params)
+  File "C:\ANACONDA3\envs\beatgan\lib\site-packages\pyod\models\sod.py", line 96, in __init__
+    raise ValueError(
+ValueError: n_neighbors should be int. Got <class 'NoneType'>
+
+2021-09-01 20:36:08,558:INFO:Subspace Outlier Detection Imported succesfully
+2021-09-01 20:36:08,568:INFO:Fitting Model
+2021-09-01 20:37:46,785:INFO:SOD(alpha=None, contamination=0.1, n_neighbors=None, ref_set=None)
+2021-09-01 20:37:46,785:INFO:create_models() succesfully completed......................................
+2021-09-01 20:37:46,786:INFO:Uploading results into container
+2021-09-01 20:37:46,786:INFO:Uploading model into container now
+2021-09-01 20:37:46,787:INFO:create_model_container: 3
+2021-09-01 20:37:46,787:INFO:master_model_container: 3
+2021-09-01 20:37:46,787:INFO:display_container: 4
+2021-09-01 20:37:46,787:INFO:SOD(alpha=None, contamination=0.1, n_neighbors=None, ref_set=None)
+2021-09-01 20:37:46,787:INFO:create_model() succesfully completed......................................
+2021-09-01 20:37:46,911:INFO:Initializing assign_model()
+2021-09-01 20:37:46,911:INFO:assign_model(model=SOD(alpha=None, contamination=0.1, n_neighbors=None, ref_set=None), transformation=False, score=True, verbose=True)
+2021-09-01 20:37:46,911:INFO:Checking exceptions
+2021-09-01 20:37:46,911:INFO:Determining Trained Model
+2021-09-01 20:37:46,911:INFO:Trained Model : Subspace Outlier Detection
+2021-09-01 20:37:46,911:INFO:Copying data
+2021-09-01 20:37:46,912:INFO:(15360, 3)
+2021-09-01 20:37:46,912:INFO:assign_model() succesfully completed......................................
+2021-09-01 20:38:50,478:INFO:Initializing create_model()
+2021-09-01 20:38:50,478:INFO:create_model(estimator=mcd, num_clusters=4, fraction=0.1, ground_truth=None, round=4, fit_kwargs=None, verbose=True, system=True, raise_num_clusters=False, display=None, kwargs={})
+2021-09-01 20:38:50,479:INFO:Checking exceptions
+2021-09-01 20:38:50,479:INFO:Preparing display monitor
+2021-09-01 20:38:50,495:INFO:Importing libraries
+2021-09-01 20:38:50,505:INFO:Importing untrained model
+2021-09-01 20:38:50,517:INFO:Minimum Covariance Determinant Imported succesfully
+2021-09-01 20:38:50,528:INFO:Fitting Model
+2021-09-01 20:38:50,548:INFO:MCD(assume_centered=False, contamination=0.1, random_state=123,
+  store_precision=True, support_fraction=None)
+2021-09-01 20:38:50,548:INFO:create_models() succesfully completed......................................
+2021-09-01 20:38:50,548:INFO:Uploading results into container
+2021-09-01 20:38:50,549:INFO:Uploading model into container now
+2021-09-01 20:38:50,550:INFO:create_model_container: 4
+2021-09-01 20:38:50,550:INFO:master_model_container: 4
+2021-09-01 20:38:50,550:INFO:display_container: 5
+2021-09-01 20:38:50,551:INFO:MCD(assume_centered=False, contamination=0.1, random_state=123,
+  store_precision=True, support_fraction=None)
+2021-09-01 20:38:50,551:INFO:create_model() succesfully completed......................................
+2021-09-01 20:38:50,674:INFO:Initializing assign_model()
+2021-09-01 20:38:50,674:INFO:assign_model(model=MCD(assume_centered=False, contamination=0.1, random_state=123,
+  store_precision=True, support_fraction=None), transformation=False, score=True, verbose=True)
+2021-09-01 20:38:50,674:INFO:Checking exceptions
+2021-09-01 20:38:50,674:INFO:Determining Trained Model
+2021-09-01 20:38:50,675:INFO:Trained Model : Minimum Covariance Determinant
+2021-09-01 20:38:50,675:INFO:Copying data
+2021-09-01 20:38:50,676:INFO:(15360, 3)
+2021-09-01 20:38:50,676:INFO:assign_model() succesfully completed......................................
+2021-09-01 20:40:04,052:INFO:Initializing create_model()
+2021-09-01 20:40:04,053:INFO:create_model(estimator=histogram, num_clusters=4, fraction=0.1, ground_truth=None, round=4, fit_kwargs=None, verbose=True, system=True, raise_num_clusters=False, display=None, kwargs={})
+2021-09-01 20:40:04,053:INFO:Checking exceptions
+2021-09-01 20:40:04,053:INFO:Preparing display monitor
+2021-09-01 20:40:04,069:INFO:Importing libraries
+2021-09-01 20:40:04,077:INFO:Importing untrained model
+2021-09-01 20:40:04,086:INFO:Histogram-based Outlier Detection Imported succesfully
+2021-09-01 20:40:04,096:INFO:Fitting Model
+2021-09-01 20:40:05,464:INFO:HBOS(alpha=0.1, contamination=0.1, n_bins=10, tol=0.5)
+2021-09-01 20:40:05,464:INFO:create_models() succesfully completed......................................
+2021-09-01 20:40:05,465:INFO:Uploading results into container
+2021-09-01 20:40:05,465:INFO:Uploading model into container now
+2021-09-01 20:40:05,466:INFO:create_model_container: 5
+2021-09-01 20:40:05,466:INFO:master_model_container: 5
+2021-09-01 20:40:05,466:INFO:display_container: 6
+2021-09-01 20:40:05,466:INFO:HBOS(alpha=0.1, contamination=0.1, n_bins=10, tol=0.5)
+2021-09-01 20:40:05,466:INFO:create_model() succesfully completed......................................
+2021-09-01 20:40:05,602:INFO:Initializing assign_model()
+2021-09-01 20:40:05,603:INFO:assign_model(model=HBOS(alpha=0.1, contamination=0.1, n_bins=10, tol=0.5), transformation=False, score=True, verbose=True)
+2021-09-01 20:40:05,603:INFO:Checking exceptions
+2021-09-01 20:40:05,603:INFO:Determining Trained Model
+2021-09-01 20:40:05,603:INFO:Trained Model : Histogram-based Outlier Detection
+2021-09-01 20:40:05,603:INFO:Copying data
+2021-09-01 20:40:05,604:INFO:(15360, 3)
+2021-09-01 20:40:05,604:INFO:assign_model() succesfully completed......................................
+2021-09-01 20:42:50,189:INFO:Initializing create_model()
+2021-09-01 20:42:50,189:INFO:create_model(estimator=cof, num_clusters=4, fraction=0.1, ground_truth=None, round=4, fit_kwargs=None, verbose=True, system=True, raise_num_clusters=False, display=None, kwargs={})
+2021-09-01 20:42:50,190:INFO:Checking exceptions
+2021-09-01 20:42:50,190:INFO:Preparing display monitor
+2021-09-01 20:42:50,203:INFO:Importing libraries
+2021-09-01 20:42:50,212:INFO:Importing untrained model
+2021-09-01 20:42:50,221:WARNING:create_model_unsupervised() for COF(contamination=0.1, method='fast', n_neighbors=None) raised an exception when cloning:
+2021-09-01 20:42:50,228:WARNING:Traceback (most recent call last):
+  File "C:\Users\hojun_window\AppData\Roaming\Python\Python38\site-packages\pycaret\internal\tabular.py", line 2610, in create_model_unsupervised
+    model = clone(model)
+  File "C:\ANACONDA3\envs\beatgan\lib\site-packages\sklearn\utils\validation.py", line 72, in inner_f
+    return f(**kwargs)
+  File "C:\ANACONDA3\envs\beatgan\lib\site-packages\sklearn\base.py", line 88, in clone
+    new_object = klass(**new_object_params)
+  File "C:\ANACONDA3\envs\beatgan\lib\site-packages\pyod\models\cof.py", line 87, in __init__
+    raise TypeError(
+TypeError: n_neighbors should be int. Got <class 'NoneType'>
+
+2021-09-01 20:42:50,228:INFO:Connectivity-Based Local Outlier Imported succesfully
+2021-09-01 20:42:50,238:INFO:Fitting Model
+2021-09-01 20:43:21,503:INFO:COF(contamination=0.1, method='fast', n_neighbors=None)
+2021-09-01 20:43:21,503:INFO:create_models() succesfully completed......................................
+2021-09-01 20:43:21,504:INFO:Uploading results into container
+2021-09-01 20:43:21,505:INFO:Uploading model into container now
+2021-09-01 20:43:21,506:INFO:create_model_container: 6
+2021-09-01 20:43:21,507:INFO:master_model_container: 6
+2021-09-01 20:43:21,507:INFO:display_container: 7
+2021-09-01 20:43:21,507:INFO:COF(contamination=0.1, method='fast', n_neighbors=None)
+2021-09-01 20:43:21,507:INFO:create_model() succesfully completed......................................
+2021-09-01 20:43:21,669:INFO:Initializing assign_model()
+2021-09-01 20:43:21,669:INFO:assign_model(model=COF(contamination=0.1, method='fast', n_neighbors=None), transformation=False, score=True, verbose=True)
+2021-09-01 20:43:21,669:INFO:Checking exceptions
+2021-09-01 20:43:21,669:INFO:Determining Trained Model
+2021-09-01 20:43:21,670:INFO:Trained Model : Connectivity-Based Local Outlier
+2021-09-01 20:43:21,670:INFO:Copying data
+2021-09-01 20:43:21,671:INFO:(15360, 3)
+2021-09-01 20:43:21,671:INFO:assign_model() succesfully completed......................................
+2021-09-01 20:46:02,417:INFO:Initializing create_model()
+2021-09-01 20:46:02,418:INFO:create_model(estimator=knn, num_clusters=4, fraction=0.1, ground_truth=None, round=4, fit_kwargs=None, verbose=True, system=True, raise_num_clusters=False, display=None, kwargs={})
+2021-09-01 20:46:02,418:INFO:Checking exceptions
+2021-09-01 20:46:02,418:INFO:Preparing display monitor
+2021-09-01 20:46:02,433:INFO:Importing libraries
+2021-09-01 20:46:02,442:INFO:Importing untrained model
+2021-09-01 20:46:02,452:INFO:K-Nearest Neighbors Detector Imported succesfully
+2021-09-01 20:46:02,461:INFO:Fitting Model
+2021-09-01 20:46:02,532:INFO:KNN(algorithm='auto', contamination=0.1, leaf_size=30, method='largest',
+  metric='minkowski', metric_params=None, n_jobs=-1, n_neighbors=5, p=2,
+  radius=1.0)
+2021-09-01 20:46:02,533:INFO:create_models() succesfully completed......................................
+2021-09-01 20:46:02,533:INFO:Uploading results into container
+2021-09-01 20:46:02,534:INFO:Uploading model into container now
+2021-09-01 20:46:02,534:INFO:create_model_container: 7
+2021-09-01 20:46:02,534:INFO:master_model_container: 7
+2021-09-01 20:46:02,534:INFO:display_container: 8
+2021-09-01 20:46:02,535:INFO:KNN(algorithm='auto', contamination=0.1, leaf_size=30, method='largest',
+  metric='minkowski', metric_params=None, n_jobs=-1, n_neighbors=5, p=2,
+  radius=1.0)
+2021-09-01 20:46:02,535:INFO:create_model() succesfully completed......................................
+2021-09-01 20:46:02,681:INFO:Initializing assign_model()
+2021-09-01 20:46:02,681:INFO:assign_model(model=KNN(algorithm='auto', contamination=0.1, leaf_size=30, method='largest',
+  metric='minkowski', metric_params=None, n_jobs=-1, n_neighbors=5, p=2,
+  radius=1.0), transformation=False, score=True, verbose=True)
+2021-09-01 20:46:02,681:INFO:Checking exceptions
+2021-09-01 20:46:02,681:INFO:Determining Trained Model
+2021-09-01 20:46:02,681:INFO:Trained Model : K-Nearest Neighbors Detector
+2021-09-01 20:46:02,681:INFO:Copying data
+2021-09-01 20:46:02,683:INFO:(15360, 3)
+2021-09-01 20:46:02,683:INFO:assign_model() succesfully completed......................................
+2021-09-01 20:46:33,736:INFO:Initializing create_model()
+2021-09-01 20:46:33,737:INFO:create_model(estimator=pca, num_clusters=4, fraction=0.1, ground_truth=None, round=4, fit_kwargs=None, verbose=True, system=True, raise_num_clusters=False, display=None, kwargs={})
+2021-09-01 20:46:33,737:INFO:Checking exceptions
+2021-09-01 20:46:33,737:INFO:Preparing display monitor
+2021-09-01 20:46:33,754:INFO:Importing libraries
+2021-09-01 20:46:33,766:INFO:Importing untrained model
+2021-09-01 20:46:33,777:INFO:Principal Component Analysis Imported succesfully
+2021-09-01 20:46:33,787:INFO:Fitting Model
+2021-09-01 20:46:33,799:INFO:PCA(contamination=0.1, copy=True, iterated_power='auto', n_components=None,
+  n_selected_components=None, random_state=123, standardization=True,
+  svd_solver='auto', tol=0.0, weighted=True, whiten=False)
+2021-09-01 20:46:33,800:INFO:create_models() succesfully completed......................................
+2021-09-01 20:46:33,800:INFO:Uploading results into container
+2021-09-01 20:46:33,801:INFO:Uploading model into container now
+2021-09-01 20:46:33,802:INFO:create_model_container: 8
+2021-09-01 20:46:33,802:INFO:master_model_container: 8
+2021-09-01 20:46:33,802:INFO:display_container: 9
+2021-09-01 20:46:33,803:INFO:PCA(contamination=0.1, copy=True, iterated_power='auto', n_components=None,
+  n_selected_components=None, random_state=123, standardization=True,
+  svd_solver='auto', tol=0.0, weighted=True, whiten=False)
+2021-09-01 20:46:33,803:INFO:create_model() succesfully completed......................................
+2021-09-01 20:46:33,951:INFO:Initializing assign_model()
+2021-09-01 20:46:33,951:INFO:assign_model(model=PCA(contamination=0.1, copy=True, iterated_power='auto', n_components=None,
+  n_selected_components=None, random_state=123, standardization=True,
+  svd_solver='auto', tol=0.0, weighted=True, whiten=False), transformation=False, score=True, verbose=True)
+2021-09-01 20:46:33,951:INFO:Checking exceptions
+2021-09-01 20:46:33,951:INFO:Determining Trained Model
+2021-09-01 20:46:33,951:INFO:Trained Model : Principal Component Analysis
+2021-09-01 20:46:33,951:INFO:Copying data
+2021-09-01 20:46:33,953:INFO:(15360, 3)
+2021-09-01 20:46:33,953:INFO:assign_model() succesfully completed......................................
+2021-09-01 20:51:26,890:INFO:Initializing create_model()
+2021-09-01 20:51:26,891:INFO:create_model(estimator=pca, num_clusters=4, fraction=0.3, ground_truth=None, round=4, fit_kwargs=None, verbose=True, system=True, raise_num_clusters=False, display=None, kwargs={})
+2021-09-01 20:51:26,891:INFO:Checking exceptions
+2021-09-01 20:51:26,891:INFO:Preparing display monitor
+2021-09-01 20:51:26,907:INFO:Importing libraries
+2021-09-01 20:51:26,917:INFO:Importing untrained model
+2021-09-01 20:51:26,927:INFO:Principal Component Analysis Imported succesfully
+2021-09-01 20:51:26,938:INFO:Fitting Model
+2021-09-01 20:51:26,943:INFO:PCA(contamination=0.3, copy=True, iterated_power='auto', n_components=None,
+  n_selected_components=None, random_state=123, standardization=True,
+  svd_solver='auto', tol=0.0, weighted=True, whiten=False)
+2021-09-01 20:51:26,943:INFO:create_models() succesfully completed......................................
+2021-09-01 20:51:26,944:INFO:Uploading results into container
+2021-09-01 20:51:26,945:INFO:Uploading model into container now
+2021-09-01 20:51:26,945:INFO:create_model_container: 9
+2021-09-01 20:51:26,946:INFO:master_model_container: 9
+2021-09-01 20:51:26,946:INFO:display_container: 10
+2021-09-01 20:51:26,946:INFO:PCA(contamination=0.3, copy=True, iterated_power='auto', n_components=None,
+  n_selected_components=None, random_state=123, standardization=True,
+  svd_solver='auto', tol=0.0, weighted=True, whiten=False)
+2021-09-01 20:51:26,946:INFO:create_model() succesfully completed......................................
+2021-09-01 20:51:27,078:INFO:Initializing assign_model()
+2021-09-01 20:51:27,078:INFO:assign_model(model=PCA(contamination=0.3, copy=True, iterated_power='auto', n_components=None,
+  n_selected_components=None, random_state=123, standardization=True,
+  svd_solver='auto', tol=0.0, weighted=True, whiten=False), transformation=False, score=True, verbose=True)
+2021-09-01 20:51:27,078:INFO:Checking exceptions
+2021-09-01 20:51:27,078:INFO:Determining Trained Model
+2021-09-01 20:51:27,078:INFO:Trained Model : Principal Component Analysis
+2021-09-01 20:51:27,078:INFO:Copying data
+2021-09-01 20:51:27,080:INFO:(15360, 3)
+2021-09-01 20:51:27,080:INFO:assign_model() succesfully completed......................................
+2021-09-01 20:51:46,908:INFO:Initializing create_model()
+2021-09-01 20:51:46,909:INFO:create_model(estimator=pca, num_clusters=4, fraction=0.005, ground_truth=None, round=4, fit_kwargs=None, verbose=True, system=True, raise_num_clusters=False, display=None, kwargs={})
+2021-09-01 20:51:46,909:INFO:Checking exceptions
+2021-09-01 20:51:46,909:INFO:Preparing display monitor
+2021-09-01 20:51:46,923:INFO:Importing libraries
+2021-09-01 20:51:46,934:INFO:Importing untrained model
+2021-09-01 20:51:46,945:INFO:Principal Component Analysis Imported succesfully
+2021-09-01 20:51:46,956:INFO:Fitting Model
+2021-09-01 20:51:46,962:INFO:PCA(contamination=0.005, copy=True, iterated_power='auto', n_components=None,
+  n_selected_components=None, random_state=123, standardization=True,
+  svd_solver='auto', tol=0.0, weighted=True, whiten=False)
+2021-09-01 20:51:46,962:INFO:create_models() succesfully completed......................................
+2021-09-01 20:51:46,963:INFO:Uploading results into container
+2021-09-01 20:51:46,963:INFO:Uploading model into container now
+2021-09-01 20:51:46,964:INFO:create_model_container: 10
+2021-09-01 20:51:46,964:INFO:master_model_container: 10
+2021-09-01 20:51:46,964:INFO:display_container: 11
+2021-09-01 20:51:46,965:INFO:PCA(contamination=0.005, copy=True, iterated_power='auto', n_components=None,
+  n_selected_components=None, random_state=123, standardization=True,
+  svd_solver='auto', tol=0.0, weighted=True, whiten=False)
+2021-09-01 20:51:46,965:INFO:create_model() succesfully completed......................................
+2021-09-01 20:51:47,103:INFO:Initializing assign_model()
+2021-09-01 20:51:47,103:INFO:assign_model(model=PCA(contamination=0.005, copy=True, iterated_power='auto', n_components=None,
+  n_selected_components=None, random_state=123, standardization=True,
+  svd_solver='auto', tol=0.0, weighted=True, whiten=False), transformation=False, score=True, verbose=True)
+2021-09-01 20:51:47,103:INFO:Checking exceptions
+2021-09-01 20:51:47,103:INFO:Determining Trained Model
+2021-09-01 20:51:47,103:INFO:Trained Model : Principal Component Analysis
+2021-09-01 20:51:47,103:INFO:Copying data
+2021-09-01 20:51:47,105:INFO:(15360, 3)
+2021-09-01 20:51:47,105:INFO:assign_model() succesfully completed......................................
