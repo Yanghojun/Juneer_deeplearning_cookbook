@@ -54,44 +54,78 @@ class Encoder(nn.Module):
 
         self.conv6 = nn.Conv1d(opt.ndf * 16, out_z, 10, 1, 0, bias=False)
 
-        self.main = nn.Sequential(
-            # input is (nc) x 320
-            nn.Conv1d(opt.nc, opt.ndf, 4, 2, 1, bias=False),
+        assert opt.isize == 320 or opt.isize == 1440
+        if opt.isize == 320:
+            self.main = nn.Sequential(
+                # input is (nc) x 320
+                nn.Conv1d(opt.nc, opt.ndf, 4, 2, 1, bias=False),
+                nn.LeakyReLU(0.2, inplace=True),
+                # state size. (ndf) x 160
+                nn.Conv1d(opt.ndf, opt.ndf * 2, 4, 2, 1, bias=False),
+                nn.BatchNorm1d(opt.ndf * 2),
+                nn.LeakyReLU(0.2, inplace=True),
+                # state size. (ndf*2) x 80
+                nn.Conv1d(opt.ndf * 2, opt.ndf * 4, 4, 2, 1, bias=False),
+                nn.BatchNorm1d(opt.ndf * 4),
+                nn.LeakyReLU(0.2, inplace=True),
+                # state size. (ndf*4) x 40
+                nn.Conv1d(opt.ndf * 4, opt.ndf * 8, 4, 2, 1, bias=False),
+                nn.BatchNorm1d(opt.ndf * 8),
+                nn.LeakyReLU(0.2, inplace=True),
+                # state size. (ndf*8) x 20
+                nn.Conv1d(opt.ndf * 8, opt.ndf * 16, 4, 2, 1, bias=False),
+                nn.BatchNorm1d(opt.ndf * 16),
+                nn.LeakyReLU(0.2, inplace=True),
+                # state size. (ndf*16) x 10
+
+                nn.Conv1d(opt.ndf * 16, out_z, 10, 1, 0, bias=False),
+                # state size. (nz) x 1
+            )
+        elif opt.isize == 1440:
+            self.main = nn.Sequential(
+            nn.Conv1d(opt.nc,opt.ndf,4,2,1,bias=False),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf) x 160
+
             nn.Conv1d(opt.ndf, opt.ndf * 2, 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt.ndf * 2),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*2) x 80
+
             nn.Conv1d(opt.ndf * 2, opt.ndf * 4, 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt.ndf * 4),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*4) x 40
+
             nn.Conv1d(opt.ndf * 4, opt.ndf * 8, 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt.ndf * 8),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*8) x 20
+
             nn.Conv1d(opt.ndf * 8, opt.ndf * 16, 4, 2, 1, bias=False),
             nn.BatchNorm1d(opt.ndf * 16),
             nn.LeakyReLU(0.2, inplace=True),
-            # state size. (ndf*16) x 10
 
-            nn.Conv1d(opt.ndf * 16, out_z, 10, 1, 0, bias=False),
-            # state size. (nz) x 1
+            nn.Conv1d(opt.ndf * 16, opt.ndf * 32, 4, 2, 1, bias=False),
+            nn.BatchNorm1d(opt.ndf * 32),
+            nn.LeakyReLU(0.2, inplace=True),
+            
+            nn.Conv1d(opt.ndf * 32, opt.ndf * 64, 4, 2, 1, bias=False),
+            nn.BatchNorm1d(opt.ndf * 64),
+            nn.LeakyReLU(0.2, inplace=True),
+
+            nn.Conv1d(opt.ndf * 64, out_z, 11, 1, 0, bias=False)
         )
+            
 
     def forward(self, input):
         if input.is_cuda and self.ngpu > 1:
             output = nn.parallel.data_parallel(
                 self.main, input, range(self.ngpu))
         else:
-            # output = self.main(input)
-            output = self.conv1(input)
-            output = self.conv2(output)
-            output = self.conv3(output)
-            output = self.conv4(output)
-            output = self.conv5(output)
-            output = self.conv6(output)
+            output = self.main(input)
+            # output = self.conv1(input)
+            # output = self.conv2(output)
+            # output = self.conv3(output)
+            # output = self.conv4(output)
+            # output = self.conv5(output)
+            # output = self.conv6(output)
         return output
 
 ##
@@ -101,7 +135,10 @@ class Decoder(nn.Module):
     def __init__(self, ngpu, opt):
         super(Decoder, self).__init__()
         self.ngpu = ngpu
-        self.main = nn.Sequential(
+        
+        assert opt.isize == 320 or opt.isize == 1440
+        if (opt.isize == 320):
+            self.main = nn.Sequential(
             # input is Z, going into a convolution
             nn.ConvTranspose1d(opt.nz, opt.ngf*16, 10, 1, 0, bias=False),
             nn.BatchNorm1d(opt.ngf*16),
@@ -126,9 +163,35 @@ class Decoder(nn.Module):
             nn.ConvTranspose1d(opt.ngf, opt.nc, 4, 2, 1, bias=False),
             nn.Tanh()
             # state size. (nc) x 320
-
-
         )
+        
+        elif (opt.isize == 1440):
+            self.main=nn.Sequential(
+           nn.ConvTranspose1d(opt.nz,opt.ngf*64,11,1,0,bias=False),        # 2020-12-18. 커널 사이즈 45임. Encoder의 self.main 쪽에서 막판 kernel을 45로 둠
+            nn.BatchNorm1d(opt.ngf*64),
+            nn.ReLU(True),
+            nn.ConvTranspose1d(opt.ngf*64,opt.ngf*32,4,2,1,bias=False),        # 2020-12-18. 커널 사이즈 45임. Encoder의 self.main 쪽에서 막판 kernel을 45로 둠
+            nn.BatchNorm1d(opt.ngf*32),
+            nn.ReLU(True),
+            nn.ConvTranspose1d(opt.ngf*32,opt.ngf*16,4,2,1, output_padding = 1,bias=False),        # 2020-12-18. 커널 사이즈 45임. Encoder의 self.main 쪽에서 막판 kernel을 45로 둠
+            nn.BatchNorm1d(opt.ngf*16),
+            nn.ReLU(True),
+            nn.ConvTranspose1d(opt.ngf * 16, opt.ngf * 8, 4, 2, 1, bias=False),
+            nn.BatchNorm1d(opt.ngf * 8),
+            nn.ReLU(True),
+            nn.ConvTranspose1d(opt.ngf * 8, opt.ngf * 4, 4, 2, 1, bias=False),
+            nn.BatchNorm1d(opt.ngf * 4),
+            nn.ReLU(True),
+            nn.ConvTranspose1d(opt.ngf * 4, opt.ngf*2, 4, 2, 1, bias=False),
+            nn.BatchNorm1d(opt.ngf*2),
+            nn.ReLU(True),
+            nn.ConvTranspose1d(opt.ngf * 2, opt.ngf , 4, 2, 1, bias=False),
+            nn.BatchNorm1d(opt.ngf),
+            nn.ReLU(True),
+            nn.ConvTranspose1d(opt.ngf , opt.nc, 4, 2, 1, bias=False),
+            nn.Tanh()
+        )
+        
 
     def forward(self, input):
         if input.is_cuda and self.ngpu > 1:
