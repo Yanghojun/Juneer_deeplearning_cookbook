@@ -99,10 +99,11 @@ def pd_to_class(_ele_name:str, _size:int)->dict:
     logger.info("Finished to change pandas to MStation class..")
     return data
     
-def load_data(opt, _ele_name:str, _size:int):
+def load_data(opt, _ele_name:str, _size:int, _generated_data):
     logger = Logger('load_data')
     
     norm_data = {'time':[], 'area':[], 'value':[], 'code':[], 'label':[]}     # label은 만약 데이터가 (3, 320)이면 (3, 1) 형태이면서 정상 구간이였으면 0, 비정상이 포함되어 있으면 1로
+                                                                              # time, area는 pycaret 평가할때 사용하려고 만듬
     anorm_data = {'time':[], 'area':[], 'value':[], 'code':[], 'label':[]}
     
     mstation_set = pd_to_class(_ele_name, _size)
@@ -114,12 +115,21 @@ def load_data(opt, _ele_name:str, _size:int):
             norm_data['area'].append(norm['AREA_INDEX'].to_numpy())
             norm_data['value'].append(norm[_ele_name].to_numpy())
             norm_data['code'].append(norm[_ele_name+'_CODE'].to_numpy())
-            
+        
         for anorm in mstation_set[id].getAnorm().values():
             anorm_data['time'].append(anorm['TIME_INDEX'].to_numpy())
             anorm_data['area'].append(anorm['AREA_INDEX'].to_numpy())            
             anorm_data['value'].append(anorm[_ele_name].to_numpy())
             anorm_data['code'].append(anorm[_ele_name+'_CODE'].to_numpy())
+    
+    ## 여기서 generated_data와 결합하면 될 듯
+    ## generated_data 쓰는 순간, norm_data['time'], norm_data['area']는 고려하지 않기때문에 밑에서 deleteNan 같은거해도 인덱스가 깨짐.
+    ## pycaret 평가 할 때는 generated_data 안쓸것기이기 때문에 상관없음
+    if _generated_data != None:
+        norm_data['time'] = np.vstack([norm_data['time'], _generated_data['time']])     # 'time'에 쓰레기값
+        norm_data['area'] = np.vstack([norm_data['area'], _generated_data['area']])     # 'area'에 쓰레기값
+        norm_data['value'] = np.vstack([norm_data['value'], _generated_data['value']])
+        norm_data['code'] = np.vstack([norm_data['code'], _generated_data['code']])
     
     # change DataFrame to Numpy
     norm_data['time'] = np.array(norm_data['time'])
@@ -227,19 +237,6 @@ def load_data(opt, _ele_name:str, _size:int):
     
     numpySave(test_nt, test_na, test_nv, test_nc, test_ant, test_ana, test_anv, test_anc, save=False)
     
-    ## ts_metric
-    # assert test_anv.shape[0] > 250      # 이게 왜 있는건지 모르겠네
-    # np.random.seed(0)
-    # # idx = np.random.randint(0, len(test_anv), size=100)
-    # ts_test_anv = []
-    # ts_test_anc = []
-    # ts_test_anl = test_anl[:100]
-    # for i in idx:
-    #     ts_test_anv.append(test_anv[i])
-    #     ts_test_anc.append(test_anc[i])
-    # ts_test_anv = np.array(ts_test_anv)
-    # ts_test_anc = np.array(ts_test_anc)
-    
     # val_normal_data 에는 air_normal_data와 air_abnormal_data가 같이 들어가 있어야 함
     # validation에서 nan을 뱉어내는 오류를 해결하기 위함
     
@@ -251,16 +248,7 @@ def load_data(opt, _ele_name:str, _size:int):
                 f"val_nv_anv size: {val_nv_anv.shape}\n" + 
                 f"test_nv size: {test_nv.shape}\n" + 
                 f"test_anv size: {test_anv.shape}")
-    
-    # 2021-01-03
-    # 데이터 늘렸을때 nan 발생하는 문제 해결하기 위함
-    # 아마 데이터들 중 nan 값이 들어있는듯 함
-    
-    # train_normal_data = np.nan_to_num(train_normal_data)
-    # val_normal_data = np.nan_to_num(val_normal_data)
-    # test_normal_data = np.nan_to_num(test_normal_data)
-    # test_abnormal_data = np.nan_to_num(test_abnormal_data)
-    # 이 부분 미래의 발전된 호준이 그냥 값 안 넣어버림..
+
 
     # 1차원 데이터는 (Batch, NumofChannel, length) 형식으로 들어가야함
     # 만약 2차원 이미지 데이터였으면 (Batch, Channel, Height, Width)
@@ -269,6 +257,7 @@ def load_data(opt, _ele_name:str, _size:int):
     # ts_test_anv = ts_test_anv.reshape(-1, 1, opt.isize)
     
     train_nv_set = TensorDataset(torch.Tensor(train_nv),torch.Tensor(train_nl))  # normal만 들어가있음. 320길이당 라벨이 하나씩 필요하므로 code를 쓰는게 아닌 np.ones를 씀
+    train_nc_set = TensorDataset(torch.Tensor(train_nc),torch.Tensor(train_nl))
     test_nv_set = TensorDataset(torch.Tensor(test_nv),torch.Tensor(test_nl)) # normal만 들어가있음
     test_nc_set = TensorDataset(torch.Tensor(test_nc),torch.Tensor(test_nl))
     test_anv_set = TensorDataset(torch.Tensor(test_anv),torch.Tensor(test_anl))  # abnormal만 들어가있음
@@ -283,6 +272,13 @@ def load_data(opt, _ele_name:str, _size:int):
 
     dataloader = {"train_nv_set": DataLoader(      # normal
                     dataset=train_nv_set,  # torch TensorDataset format
+                    batch_size=opt.batchsize,  # mini batch size
+                    shuffle=True,
+                    num_workers=int(opt.workers),
+                    drop_last=True),        # 코드보니까 여기를 True로 놓아야 bse에서 size 차이 안남. 코드상으로 label을 self.opt.batchsize로 주고있어서, 마지막에 input 데이터 크기가 달라지는거 고려안함
+                  
+                  "train_nc_set": DataLoader(      # normal
+                    dataset=train_nc_set,  # torch TensorDataset format
                     batch_size=opt.batchsize,  # mini batch size
                     shuffle=True,
                     num_workers=int(opt.workers),

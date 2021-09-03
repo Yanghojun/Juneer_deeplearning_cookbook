@@ -30,6 +30,7 @@ class Options():
         self.parser.add_argument('--ngpu', type=int, default=1, help='number of GPUs to use')
         self.parser.add_argument('--model', type=str, default='beatgan', help='choose model')
         self.parser.add_argument('--outf', default='./result', help='output folder')
+        self.parser.add_argument('--generated', action='store_true',help='Use generated data or not')
 
         ##
         # Train

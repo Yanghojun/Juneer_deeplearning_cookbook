@@ -2,8 +2,10 @@ from models.beatgan import BeatGAN
 import os
 import torch
 from utils.options import Options
-from utils.preprocess import load_data, load_data
+from utils.preprocess import load_data
 from utils.log import Logger
+import gzip
+import pickle
 
 os.environ["CUDA_VISIBLE_DEVICES"] = "0"
 
@@ -17,7 +19,17 @@ if __name__ == '__main__':
     opt = Options().parse()
     
     # dataloader, test_normal_filename, test_abnormal_filename = load_data(opt)
-    dataloader = load_data(opt, _ele_name = 'PM10', _size = opt.isize)
+    
+    generated_data = None
+    
+    if opt.generated:
+        with gzip.open('./data/NIER_dataset/generated_data.pickle', 'rb') as f:
+            generated_data = pickle.load(f)
+            
+    if opt.istest:      # Test 할 때는 genearated_data 포함되면 안됌
+        generated_data = None
+        
+    dataloader = load_data(opt, _ele_name='SO2', _size=opt.isize, _generated_data=generated_data)
     
     logger.info("Load data success..")
 

@@ -18,6 +18,8 @@ import torch.optim as optim
 from tqdm import tqdm
 from utils.plot import *
 from sklearn.metrics import classification_report
+import gzip
+import pickle
 
 dirname = os.path.dirname
 sys.path.insert(0, dirname(dirname(os.path.abspath(__file__))))
@@ -777,8 +779,8 @@ class BeatGAN(AD_MODEL):
                 # 파일 이름에 따라서 어떤 그림을 만들지 정하기 위함.
                 tp_dir = os.path.split(save_dir)[-1]
                 for idx in range(batch_input.shape[0]):
-                    # if len(test_pair) > 100:  # 100장의 이상의 png 파일을 만들지 않기 위함
-                    #     break
+                    if len(test_pair) > 100:  # 100장의 이상의 png 파일을 만들지 않기 위함
+                        break
                     normal_score = (
                         ano_score[idx]-min_score)/(max_score-min_score)
 
@@ -867,33 +869,33 @@ class BeatGAN(AD_MODEL):
         self.analysisRes(y_pred_air, A_res, min_score,
                          max_score, res_th, save_dir)
 
-        # self.draw_test_result(self.dataloader["test_nv_set"],
-        #                       self.dataloader["test_nc_set"],
-        #                       min_score,
-        #                       max_score,
-        #                       res_th,
-        #                       save_dir=os.path.join(save_dir, "Normal_Data_Predicted_As_Normal - (TN)"))
+        self.draw_test_result(self.dataloader["test_nv_set"],
+                              self.dataloader["test_nc_set"],
+                              min_score,
+                              max_score,
+                              res_th,
+                              save_dir=os.path.join(save_dir, "Normal_Data_Predicted_As_Normal - (TN)"))
 
-        # self.draw_test_result(self.dataloader["test_nv_set"],
-        #                       self.dataloader["test_nc_set"],
-        #                       min_score,
-        #                       max_score,
-        #                       res_th,
-        #                       save_dir=os.path.join(save_dir, "Normal_Data_Predicted_As_Anormal - (FP)"))
+        self.draw_test_result(self.dataloader["test_nv_set"],
+                              self.dataloader["test_nc_set"],
+                              min_score,
+                              max_score,
+                              res_th,
+                              save_dir=os.path.join(save_dir, "Normal_Data_Predicted_As_Anormal - (FP)"))
 
-        # self.draw_test_result(self.dataloader["test_anv_set"],
-        #                       self.dataloader["test_anc_set"],
-        #                       min_score,
-        #                       max_score,
-        #                       res_th,
-        #                       save_dir=os.path.join(save_dir, "Anormal_Data_Predicted_As_Normal - (FN)"))
+        self.draw_test_result(self.dataloader["test_anv_set"],
+                              self.dataloader["test_anc_set"],
+                              min_score,
+                              max_score,
+                              res_th,
+                              save_dir=os.path.join(save_dir, "Anormal_Data_Predicted_As_Normal - (FN)"))
 
-        # self.draw_test_result(self.dataloader["test_anv_set"],
-        #                       self.dataloader["test_anc_set"],
-        #                       min_score,
-        #                       max_score,
-        #                       res_th,
-        #                       save_dir=os.path.join(save_dir, "Anormal_Data_Predicted_As_Anormal - (TP)"))
+        self.draw_test_result(self.dataloader["test_anv_set"],
+                              self.dataloader["test_anc_set"],
+                              min_score,
+                              max_score,
+                              res_th,
+                              save_dir=os.path.join(save_dir, "Anormal_Data_Predicted_As_Anormal - (TP)"))
 
         aucprc, aucroc, best_th, best_f1 = beatgan_ori_evaluate(
             over_all_gt, (over_all-min_score)/(max_score-min_score), saveto='./')
@@ -947,41 +949,24 @@ class BeatGAN(AD_MODEL):
         self.ts_evaluation(score, label, res_th)
         
 
-    def generate(self, filename):
+    def generate(self):
 
         self.G.eval()
         self.D.eval()
-        res_th = self.opt.threshold
-        save_dir = os.path.join(self.outf, self.model,
-                                self.dataset, "test", str(self.opt.folder))
 
-        dataloader_ = self.dataloader["test_nv_set"]
-        dataloader_code_ = self.dataloader["test_nc_set"]
+        dataloader_ = self.dataloader["train_nv_set"]
+        dataloader_code_ = self.dataloader["train_nc_set"]
 
         with torch.no_grad():
-            self.an_scores = torch.zeros(
-                size=(len(dataloader_.dataset),), dtype=torch.float32, device=self.device)
-            self.gt_labels = torch.zeros(
-                size=(len(dataloader_.dataset),), dtype=torch.long,    device=self.device)
-            self.latent_i = torch.zeros(size=(
-                len(dataloader_.dataset), self.opt.nz), dtype=torch.float32, device=self.device)
-            self.timeseries_metric_score = torch.zeros(size=(len(
-                dataloader_.dataset), self.opt.isize), dtype=torch.float32, device=self.device)
-            self.timeseries_metric_label = torch.zeros(size=(len(
-                dataloader_.dataset), self.opt.isize), dtype=torch.float32, device=self.device)
-            self.dis_feat = torch.zeros(size=(len(dataloader_.dataset), self.opt.ndf*16*10), dtype=torch.float32,
-                                        device=self.device)
+            self.an_scores = torch.zeros(size=(len(dataloader_.dataset),), dtype=torch.float32, device=self.device)
+            self.gt_labels = torch.zeros(size=(len(dataloader_.dataset),), dtype=torch.long,    device=self.device)
+            self.latent_i = torch.zeros(size=(len(dataloader_.dataset), self.opt.nz), dtype=torch.float32, device=self.device)
+            self.timeseries_metric_score = torch.zeros(size=(len(dataloader_.dataset), self.opt.isize), dtype=torch.float32, device=self.device)
+            self.timeseries_metric_label = torch.zeros(size=(len(dataloader_.dataset), self.opt.isize), dtype=torch.float32, device=self.device)
+            self.dis_feat = torch.zeros(size=(len(dataloader_.dataset), self.opt.ndf*16*10), dtype=torch.float32,device=self.device)
 
-            if not os.path.isdir("./GeneratedData"):
-                os.mkdir("./GeneratedData")
-
-            fake_data = []
-            # 데이터 이름(PM10, CO, O3 등등)
-            data_name = ((self.opt.dataroot).split('/'))[-2]
-
-            if not os.path.isdir(os.path.join("./GeneratedData", data_name)):
-                os.mkdir(os.path.join("./GeneratedData", data_name))
-
+            fake_value = []
+            fake_code = []
             # dataloader_: normal로 이루어진 데이터셋
             for i, _data in enumerate(zip(dataloader_, dataloader_code_), 0):
                 # _data[0]에는 실제 센서값과, 해당 구간이 정상(0)인지 비정상(1)인지 알려주는 레이블도 같이 들어있음
@@ -989,34 +974,33 @@ class BeatGAN(AD_MODEL):
                 wrong_code = _data[1][0]
                 # self.input, self.gt에 각각 실제 데이터 들어가게 해줌
                 self.set_input(data)
+                
                 # self.fake: 가짜 데이터, latent_i: Encoder 결과 (압축된 Tensor)
                 self.fake, latent_i = self.G(self.input)
 
-                fake_data.append(self.fake)
-
                 # 여기부터 복붙코드
                 batch_output = self.fake.cpu().numpy()
-                batch_code = data[1][0].cpu().numpy()
-
-                # batch_filename = filename[data[0][0].shape[0]*i:data[0][0].shape[0]*i+data[0][0].shape[0]] 이거 코드 좀 이상한데..? 배치가 8이면 8개씩 가져와야 할텐데..
-                batch_filename = filename[i * batch_output.shape[0]
-                    :i * batch_output.shape[0] + batch_output.shape[0]]
-                for idx in range(batch_output.shape[0]):
-                    '''
-                    input data의 파일이름을 살려서 Json 데이터로 만들기
-                    '''
-                    json_data = {}
-                    json_data["area"] = int(batch_filename[idx].split("_")[0])
-                    json_data["start_date"] = batch_filename[idx].split("_")[1]
-                    json_data["data"] = {
-                        f"{data_name}": [float(value) for value in batch_output[idx][0]],
-                        f"{data_name}_CODE": [0 for i in range(self.opt.isize)]
-                    }
-                    with open(os.path.join("./GeneratedData", data_name, "f_" + batch_filename[idx] + ".json"), 'w', encoding='utf-8') as f:
-                        json.dump(json_data, f,
-                                  ensure_ascii=False, indent="\t")
-            return fake_data
-
+                batch_code = wrong_code.cpu().numpy()
+                
+                fake_value.append(batch_output)
+                fake_code.append(batch_code)
+            
+        tp_value_list = []
+        tp_code_list = []
+        for idx, np_block in enumerate(zip(fake_value, fake_code)):
+            fake_value[idx] = np_block[0].squeeze()
+            # fake_code[idx] = np_block[1].squeeze()        code는 이미 한번 squeeze 되어 있는것으로 생각해도 됨
+            
+            for value in fake_value[idx]:
+                tp_value_list.append(value)
+            
+            for code in fake_code[idx]:
+                tp_code_list.append(code.astype('int'))
+    
+        fake_data = {'time':tp_code_list, 'area':tp_code_list, 'value': tp_value_list, 'code': tp_code_list}    # 'time', 'area'는 그냥 쓰레기값으로 생각하면 됨
+        
+        with gzip.open(os.path.join('data', 'NIER_dataset','generated_data.pickle'), 'wb') as f:
+            pickle.dump(fake_data, f)
 
 # min-max Normalization (최소-최대 정규화). 모든 feature에 대해 각각의 최소값 0, 최대값 1로, 나머지값은 그 사이에 되게끔 변경
 def normal(array, min_val, max_val):
