@@ -3,3 +3,7 @@
 /**/*.pth
 /**/*.png
 /**/*.txt
+/**/*.pickle
+*.pickle
+*.zip
+.vscode

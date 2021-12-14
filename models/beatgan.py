@@ -869,33 +869,33 @@ class BeatGAN(AD_MODEL):
         self.analysisRes(y_pred_air, A_res, min_score,
                          max_score, res_th, save_dir)
 
-        self.draw_test_result(self.dataloader["test_nv_set"],
-                              self.dataloader["test_nc_set"],
-                              min_score,
-                              max_score,
-                              res_th,
-                              save_dir=os.path.join(save_dir, "Normal_Data_Predicted_As_Normal - (TN)"))
+        # self.draw_test_result(self.dataloader["test_nv_set"],
+        #                       self.dataloader["test_nc_set"],
+        #                       min_score,
+        #                       max_score,
+        #                       res_th,
+        #                       save_dir=os.path.join(save_dir, "Normal_Data_Predicted_As_Normal - (TN)"))
 
-        self.draw_test_result(self.dataloader["test_nv_set"],
-                              self.dataloader["test_nc_set"],
-                              min_score,
-                              max_score,
-                              res_th,
-                              save_dir=os.path.join(save_dir, "Normal_Data_Predicted_As_Anormal - (FP)"))
+        # self.draw_test_result(self.dataloader["test_nv_set"],
+        #                       self.dataloader["test_nc_set"],
+        #                       min_score,
+        #                       max_score,
+        #                       res_th,
+        #                       save_dir=os.path.join(save_dir, "Normal_Data_Predicted_As_Anormal - (FP)"))
 
-        self.draw_test_result(self.dataloader["test_anv_set"],
-                              self.dataloader["test_anc_set"],
-                              min_score,
-                              max_score,
-                              res_th,
-                              save_dir=os.path.join(save_dir, "Anormal_Data_Predicted_As_Normal - (FN)"))
+        # self.draw_test_result(self.dataloader["test_anv_set"],
+        #                       self.dataloader["test_anc_set"],
+        #                       min_score,
+        #                       max_score,
+        #                       res_th,
+        #                       save_dir=os.path.join(save_dir, "Anormal_Data_Predicted_As_Normal - (FN)"))
 
-        self.draw_test_result(self.dataloader["test_anv_set"],
-                              self.dataloader["test_anc_set"],
-                              min_score,
-                              max_score,
-                              res_th,
-                              save_dir=os.path.join(save_dir, "Anormal_Data_Predicted_As_Anormal - (TP)"))
+        # self.draw_test_result(self.dataloader["test_anv_set"],
+        #                       self.dataloader["test_anc_set"],
+        #                       min_score,
+        #                       max_score,
+        #                       res_th,
+        #                       save_dir=os.path.join(save_dir, "Anormal_Data_Predicted_As_Anormal - (TP)"))
 
         aucprc, aucroc, best_th, best_f1 = beatgan_ori_evaluate(
             over_all_gt, (over_all-min_score)/(max_score-min_score), saveto='./')

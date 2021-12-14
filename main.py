@@ -29,7 +29,7 @@ if __name__ == '__main__':
     if opt.istest:      # Test 할 때는 genearated_data 포함되면 안됌
         generated_data = None
         
-    dataloader = load_data(opt, _ele_name='SO2', _size=opt.isize, _generated_data=generated_data)
+    dataloader = load_data(opt, _ele_name=opt.elename, _size=opt.isize, _generated_data=generated_data)
     
     logger.info("Load data success..")
 

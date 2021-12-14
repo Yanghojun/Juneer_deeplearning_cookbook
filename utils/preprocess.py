@@ -7,6 +7,7 @@ import numpy as np
 from numpy.lib.function_base import delete
 from sklearn.utils import shuffle
 import torch
+# from torch._C import float32, float64
 from  torch.utils.data import DataLoader,TensorDataset
 from sklearn.model_selection import train_test_split
 import json
@@ -113,13 +114,13 @@ def load_data(opt, _ele_name:str, _size:int, _generated_data):
         for norm in mstation_set[id].getNorm().values():
             norm_data['time'].append(norm['TIME_INDEX'].to_numpy())
             norm_data['area'].append(norm['AREA_INDEX'].to_numpy())
-            norm_data['value'].append(norm[_ele_name].to_numpy())
+            norm_data['value'].append(norm[_ele_name].to_numpy(dtype="float64"))        # float64 쓰는 이유: 0으로 나눠줬을 때 프로그램이 중단되지 않고 Nan을 뱉게끔 하기 위함
             norm_data['code'].append(norm[_ele_name+'_CODE'].to_numpy())
         
         for anorm in mstation_set[id].getAnorm().values():
             anorm_data['time'].append(anorm['TIME_INDEX'].to_numpy())
             anorm_data['area'].append(anorm['AREA_INDEX'].to_numpy())            
-            anorm_data['value'].append(anorm[_ele_name].to_numpy())
+            anorm_data['value'].append(anorm[_ele_name].to_numpy(dtype="float64"))      # float64 쓰는 이유: 0으로 나눠줬을 때 프로그램이 중단되지 않고 Nan을 뱉게끔 하기 위함
             anorm_data['code'].append(anorm[_ele_name+'_CODE'].to_numpy())
     
     ## 여기서 generated_data와 결합하면 될 듯
@@ -142,7 +143,7 @@ def load_data(opt, _ele_name:str, _size:int, _generated_data):
     anorm_data['value'] = np.array(anorm_data['value'])
     anorm_data['code'] = np.array(anorm_data['code'])
 
-    norm_data['value'] # normalize 320시간 간격으로 하기
+    norm_data['value'] # normalize 입력데이터 시간 간격으로 하기
     for i in range(norm_data['value'].shape[0]):
         norm_data['value'][i] = normalize(norm_data['value'][i])
     
@@ -163,7 +164,7 @@ def load_data(opt, _ele_name:str, _size:int, _generated_data):
                 if bool_data[row][col] == True:
                     deleteIdx.append(row)
                     break
-        
+        print(f"지워지는 데이터 갯수: {len(deleteIdx)}")
         _time = np.delete(_time, deleteIdx, 0)
         _area = np.delete(_area, deleteIdx, 0)
         _value = np.delete(_value, deleteIdx, 0)
@@ -232,10 +233,11 @@ def load_data(opt, _ele_name:str, _size:int, _generated_data):
                 'anorm_code':anorm_code}
         
         if save:
-            with gzip.open('./data_for_pycaret.pickle', 'wb') as f:
+            with gzip.open('./data/NIER_dataset/' + 'pycaret_'+ str(opt.elename) + '_' + str(opt.isize) + '.pickle', 'wb') as f:
                 pickle.dump(data, f)
     
-    numpySave(test_nt, test_na, test_nv, test_nc, test_ant, test_ana, test_anv, test_anc, save=False)
+    numpySave(test_nt, test_na, test_nv, test_nc, test_ant, test_ana, test_anv, test_anc, save=True)
+    exit()
     
     # val_normal_data 에는 air_normal_data와 air_abnormal_data가 같이 들어가 있어야 함
     # validation에서 nan을 뱉어내는 오류를 해결하기 위함
