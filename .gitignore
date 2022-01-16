@@ -2,6 +2,7 @@
 /**/*.pkl
 /**/*.pth
 /**/*.png
+!/images/*.png
 /**/*.txt
 /**/*.pickle
 *.pickle
