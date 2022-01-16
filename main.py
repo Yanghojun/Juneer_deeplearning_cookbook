@@ -21,9 +21,9 @@ if __name__ == '__main__':
     # dataloader, test_normal_filename, test_abnormal_filename = load_data(opt)
     
     generated_data = None
-    
+
     if opt.generated:
-        with gzip.open('./data/NIER_dataset/generated_data.pickle', 'rb') as f:
+        with gzip.open('./data/NIER_dataset/generated_data'+'_' + opt.elename + '_' + str(opt.isize) + '.pickle', 'rb') as f:
             generated_data = pickle.load(f)
             
     if opt.istest:      # Test 할 때는 genearated_data 포함되면 안됌

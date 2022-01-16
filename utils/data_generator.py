@@ -18,6 +18,7 @@ if __name__ == '__main__':
     opt = Options().parse()
     
     generated_data = None
+    
     dataloader = load_data(opt, _ele_name=opt.elename, _size=opt.isize, _generated_data=generated_data)        # 필요없는 부분이긴 한데 BeatGAN 클래스 인자로 dataloader 줘야하니 그냥 두자
     print("load data success!!!")
 

@@ -999,7 +999,7 @@ class BeatGAN(AD_MODEL):
     
         fake_data = {'time':tp_code_list, 'area':tp_code_list, 'value': tp_value_list, 'code': tp_code_list}    # 'time', 'area'는 그냥 쓰레기값으로 생각하면 됨
         
-        with gzip.open(os.path.join('data', 'NIER_dataset','generated_data.pickle'), 'wb') as f:
+        with gzip.open(os.path.join('data', 'NIER_dataset','generated_data_'+ self.opt.elename + '_' + str(self.opt.isize) + '.pickle'), 'wb') as f:
             pickle.dump(fake_data, f)
 
 # min-max Normalization (최소-최대 정규화). 모든 feature에 대해 각각의 최소값 0, 최대값 1로, 나머지값은 그 사이에 되게끔 변경

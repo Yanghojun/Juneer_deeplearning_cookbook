@@ -233,7 +233,7 @@ def load_data(opt, _ele_name:str, _size:int, _generated_data):
                 'anorm_code':anorm_code}
         
         if save:
-            with gzip.open('./data/NIER_dataset/' + 'pycaret_'+ str(opt.elename) + '_' + str(opt.isize) + '.pickle', 'wb') as f:
+            with gzip.open('./data/NIER_dataset/' + 'pycaret_'+ str(opt.elename) + '_G' + '_' + str(opt.isize) + '.pickle', 'wb') as f:
                 pickle.dump(data, f)
     
     numpySave(test_nt, test_na, test_nv, test_nc, test_ant, test_ana, test_anv, test_anc, save=True)
@@ -250,7 +250,6 @@ def load_data(opt, _ele_name:str, _size:int, _generated_data):
                 f"val_nv_anv size: {val_nv_anv.shape}\n" + 
                 f"test_nv size: {test_nv.shape}\n" + 
                 f"test_anv size: {test_anv.shape}")
-
 
     # 1차원 데이터는 (Batch, NumofChannel, length) 형식으로 들어가야함
     # 만약 2차원 이미지 데이터였으면 (Batch, Channel, Height, Width)
