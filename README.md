@@ -16,10 +16,14 @@ python main.py --elename SO2 --isize 320 --generated
 python main.py --elename SO2 --isize 320  --istest
 ```
 ## BeatGAN Fake Data 생성
-1. 학습된 BeatGAN weight 파일 result/beatgan/NIER/model/에 배치
+1. 학습된 BeatGAN weight 파일 result/beatgan/NIER/model/에 배치  
+
+
+![](/images/2022-01-16-18-40-32.png)
+
 ![](/images/2022-01-16-18-40-32.png)
 ![](/images2022-01-16-18-42-09.png)
-2. utils/data_generator.py 스크립트 사용
+1. utils/data_generator.py 스크립트 사용
     ```python
     python utils/data_generator.py --elename SO2 --isize 320  --generated
     ```

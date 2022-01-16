@@ -232,12 +232,14 @@ def load_data(opt, _ele_name:str, _size:int, _generated_data):
                 'anorm_value':anorm_value, 
                 'anorm_code':anorm_code}
         
+        print(f'######## numpySave 함수 ########')
+        print(f'norm_value.shape: {data["norm_value"].shape}')
         if save:
             with gzip.open('./data/NIER_dataset/' + 'pycaret_'+ str(opt.elename) + '_' + str(opt.isize) + '_G' '.pickle', 'wb') as f:
                 pickle.dump(data, f)
     
-    numpySave(test_nt, test_na, test_nv, test_nc, test_ant, test_ana, test_anv, test_anc, save=False)
-    # exit()
+    numpySave(test_nt, test_na, test_nv, test_nc, test_ant, test_ana, test_anv, test_anc, save=True)
+    exit()
     
     # val_normal_data 에는 air_normal_data와 air_abnormal_data가 같이 들어가 있어야 함
     # validation에서 nan을 뱉어내는 오류를 해결하기 위함
