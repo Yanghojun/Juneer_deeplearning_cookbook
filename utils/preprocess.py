@@ -233,7 +233,7 @@ def load_data(opt, _ele_name:str, _size:int, _generated_data):
                 'anorm_code':anorm_code}
         
         if save:
-            with gzip.open('./data/NIER_dataset/' + 'pycaret_'+ str(opt.elename) + '_G' + '_' + str(opt.isize) + '.pickle', 'wb') as f:
+            with gzip.open('./data/NIER_dataset/' + 'pycaret_'+ str(opt.elename) + '_' + str(opt.isize) + '_G' '.pickle', 'wb') as f:
                 pickle.dump(data, f)
     
     numpySave(test_nt, test_na, test_nv, test_nc, test_ant, test_ana, test_anv, test_anc, save=True)
