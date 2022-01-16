@@ -8,11 +8,10 @@ python main.py --elename SO2 --isize 320  --istest
 1. 학습된 BeatGAN weight 파일 result/beatgan/NIER/model/에 배치
 ![](2022-01-16-18-40-32.png)
 ![](2022-01-16-18-42-09.png)
-- utils/data_generator.py 스크립트 사용
-  ```python
-  python utils/data_generator.py --elename SO2 --isize 320  --generated
-  ```
-2. 
+2. utils/data_generator.py 스크립트 사용
+    ```python
+    python utils/data_generator.py --elename SO2 --isize 320  --generated
+    ```
 
 # Pycaret 라이브러리 평가  
 1. Pycaret 전용 Dictionary 데이터 생성  
@@ -26,5 +25,7 @@ python main.py --elename SO2 --isize 320  --istest
    numpySave(test_nt, test_na, test_nv, test_nc, test_ant, test_ana, test_anv, test_anc, save=True)
    exit()
    ```
-   - Fake Data도 Pycaret
-2. 모델이 생성한
+2. Pycaret 전용 데이터를 통한 평가 진행
+   2.1 data/NIER_dataset/ 에서 생성 데이터 확인
+   ![](2022-01-16-18-56-33.png)  
+   2.2 evaluate_pycaret.ipynb파일로 생성 데이터를 활용하여 Score 산출
