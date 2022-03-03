@@ -18,15 +18,16 @@ python main.py --elename SO2 --isize 320  --istest
 ## BeatGAN Fake Data 생성
 1. 학습된 BeatGAN weight 파일 result/beatgan/NIER/model/에 배치  
 
-
 ![](/images/2022-01-16-18-40-32.png)
 
-![](/images/2022-01-16-18-40-32.png)
-![](/images2022-01-16-18-42-09.png)
-1. utils/data_generator.py 스크립트 사용
+![](/images/2022-01-16-18-42-09.png)
+
+2. utils/data_generator.py 스크립트 사용
     ```python
     python utils/data_generator.py --elename SO2 --isize 320  --generated
     ```
+    - 위 커맨드를 통해 fakedata가 생성됨. 학습할 땐 이 fakedata를 정상 데이터로 간주하고 학습이 진행됨.
+    - 테스트 시에는 정확한 성능 산출을 위해 fakedata는 포함하지 않음
 
 # Pycaret을 활용한 Anomaly detection model 성능 평가  
 1. Pycaret 전용 Dictionary 데이터 생성  
@@ -41,6 +42,8 @@ python main.py --elename SO2 --isize 320  --istest
    exit()
    ```
 2. Pycaret 전용 데이터를 통한 평가 진행
-   2.1 data/NIER_dataset/ 에서 생성 데이터 확인
-   ![](/images/2022-01-16-18-56-33.png)  
-   2.2 evaluate_pycaret.ipynb파일로 생성 데이터를 활용하여 **best f1-score** 산출
+- data/NIER_dataset/ 에서 생성된 데이터 확인
+- evaluate_pycaret.ipynb 파일로 생성 데이터를 활용하여 **best f1-score** 산출
+![](/images/2022-01-16-18-56-33.png)  
+
+- 위 그림에서 보이는 G의 의미는 model이 ....
