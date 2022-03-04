@@ -322,6 +322,7 @@ class AD_MODEL(object):
         :param max_score:
         :return:
         '''
+        
         print("############   Analysis   #############")
         print("############   Threshold:{}   #############".format(threshold))
         all_abnormal_score = []

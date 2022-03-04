@@ -9,7 +9,14 @@ python main.py --elename SO2 --isize 320
 python main.py --elename SO2 --isize 320 --generated
 ```
 
-# BeatGAN 모델 테스트
+# BeatGAN 모델 테스트 (테스트 할 때도 가중치 파일 아래 그림처럼 상위 디렉토리로 빼야함)
+
+![](2022-03-04-14-45-21.png)
+
+- 위 그림처럼 해당 데이터의 가중치파일 상위 디렉토리에 배치해야함
+------
+
+
 - 모델 입력 데이터 길이: 320
 - 테스트 할 항목: SO2
 ```python
