@@ -45,7 +45,7 @@ if __name__ == '__main__':
         model.train()
     else:
         logger.info("Test start...")
-        model.load()        # BeatGan이 상속하고 있는 (상속하다 == 재산을 물려받다) AD_MODEL에 있는 load 함수    
+        model.load(opt)        # BeatGan이 상속하고 있는 (상속하다 == 재산을 물려받다) AD_MODEL에 있는 load 함수    
         
         if opt.ts:
             model.ts_test()

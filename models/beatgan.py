@@ -268,8 +268,10 @@ class AD_MODEL(object):
         torch.save(self.D.state_dict(), os.path.join(
             save_dir, self.model+"_folder_"+str(self.opt.folder) + '_D.pkl'))
 
-    def load(self):
-        save_dir = os.path.join(self.outf, self.model, self.dataset, "model")
+    def load(self, opt):
+        save_dir = os.path.join(self.outf, self.model, self.dataset, "model", opt.elename + "_" + str(opt.niter) + "E_" + str(opt.isize))
+        if opt.generated:
+            save_dir += "_G"
 
         self.G.load_state_dict(torch.load(os.path.join(
             save_dir, self.model+"_folder_"+str(self.opt.folder) + '_G.pkl')))
@@ -322,7 +324,7 @@ class AD_MODEL(object):
         :param max_score:
         :return:
         '''
-        
+
         print("############   Analysis   #############")
         print("############   Threshold:{}   #############".format(threshold))
         all_abnormal_score = []
@@ -905,6 +907,10 @@ class BeatGAN(AD_MODEL):
         print("ap:{}".format(aucprc))
         print("auc:{}".format(aucroc))
         print("best th:{} --> best f1:{}".format(best_th, best_f1))
+
+        # 위 beatgan_ori_evaluate에서 구한 best th를 대입하기 위함
+        self.analysisRes(y_pred_air, A_res, min_score,
+                         max_score, best_th, save_dir)
 
         with open(os.path.join(save_dir, "res-record.txt"), 'w') as f:
             f.write("auc_prc:{}\n".format(aucprc))
