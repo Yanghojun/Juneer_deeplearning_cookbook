@@ -7,8 +7,10 @@ import numpy as np
 from numpy.lib.function_base import delete
 from sklearn.utils import shuffle
 import torch
+import torchvision.transforms as transforms
 # from torch._C import float32, float64
 from  torch.utils.data import DataLoader,TensorDataset
+from torch.utils.data import Dataset
 from sklearn.model_selection import train_test_split
 import json
 import glob
@@ -17,7 +19,11 @@ import pandas as pd
 from typing import Union
 import gzip
 import pickle
-from utils.log import Logger
+import sys
+sys.path.append(os.path.join(os.getcwd()))
+from log import Logger
+from data.load_mnist import load_mnist, output_label
+
 
 seed = 42
 np.random.seed(seed)
@@ -468,3 +474,43 @@ def aug_ts(x):
             x_1[:, j] = x[:, i]
             j += 1
     return x_1
+
+class MNistDataset(Dataset):
+    def __init__(self, path, kind='train', transform=None):
+        images, labels = load_mnist(path, kind)
+        images = np.reshape(images, (-1, 28, 28, 1))        # transforms.ToTensor()는 numpy 입력(channel, height, width), PIL 입력을 모두 
+                                                            # (Batch, Channel, height, width)로 간주하고 있어서 맞춰준 것임        
+        self.images, self.labels = images, labels
+        self.transform = transform
+
+    def __len__(self):
+        return len(self.images)
+
+    def __getitem__(self, idx):
+        # 이걸 여기서 transform 진행하는 것 보다, __init__ 쪽에서 한방에 진행하는게 처리시간이 더 빠르지 않나?
+        if self.transform == None:
+            self.transform = transforms.Compose([
+                transforms.ToTensor()
+            ]
+        )
+
+        image = self.transform(self.images[idx])
+        label = self.labels[idx]    # warning 에러가 왜 뜨는 걸까..
+
+        return image, label
+
+if __name__ == '__main__':
+    mnist_dataset = MNistDataset(path='./data/MNIST', kind='train')
+    mnist_dataloader = DataLoader(
+        mnist_dataset,
+        batch_size=1,
+        shuffle=True,
+        )
+    
+    image, label = next(iter(mnist_dataloader))
+    print(image.shape, label.shape)
+
+    import matplotlib.pyplot as plt
+    plt.imshow(image.squeeze(), cmap='gray')
+    plt.show()
+    print(output_label(label))
