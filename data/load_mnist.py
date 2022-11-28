@@ -25,6 +25,8 @@ def output_label(label):
     return output_mapping[input]
 
 def load_mnist(path:str, kind:str='train') -> Tuple[np.uint8, np.uint8]:
+    if kind == 'test':
+        kind = 't10k'
     images_path = os.path.join(path, f'{kind}-images-idx3-ubyte')
     labels_path = os.path.join(path, f'{kind}-labels-idx1-ubyte')
 

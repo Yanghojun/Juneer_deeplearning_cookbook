@@ -9,7 +9,7 @@ from sklearn.utils import shuffle
 import torch
 import torchvision.transforms as transforms
 # from torch._C import float32, float64
-from  torch.utils.data import DataLoader,TensorDataset
+from torch.utils.data import DataLoader,TensorDataset
 from torch.utils.data import Dataset
 from sklearn.model_selection import train_test_split
 import json
@@ -21,7 +21,7 @@ import gzip
 import pickle
 import sys
 sys.path.append(os.path.join(os.getcwd()))
-from log import Logger
+from utils.log import Logger
 from data.load_mnist import load_mnist, output_label
 
 
