@@ -1,4 +1,6 @@
-# BeatGAN 모델 학습
+# BeatGAN
+
+## Training
 - 모델 입력 데이터 길이: 320
 - 학습할 항목: SO2
 ```python
@@ -9,14 +11,16 @@ python main.py --elename SO2 --isize 320
 python main.py --elename SO2 --isize 320 --generated
 ```
 
-# BeatGAN 모델 테스트 (테스트 할 때도 가중치 파일 아래 그림처럼 상위 디렉토리로 빼야함)
+## Test
+테스트 할 때도 가중치 파일 아래 그림처럼 상위 디렉토리로 빼야한다.
 
 - 모델 입력 데이터 길이: 320
 - 테스트 할 항목: SO2
 ```python
 python main.py --elename SO2 --isize 320  --istest
 ```
-## BeatGAN Fake Data 생성
+## Generate Fake Data
+
 1. 학습된 BeatGAN weight 파일 result/beatgan/NIER/model/에 배치  
 
 ![](/images/2022-01-16-18-40-32.png)
@@ -30,7 +34,10 @@ python main.py --elename SO2 --isize 320  --istest
     - 위 커맨드를 통해 fakedata가 생성됨. 학습할 땐 이 fakedata를 정상 데이터로 간주하고 학습이 진행됨.
     - 테스트 시에는 정확한 성능 산출을 위해 fakedata는 포함하지 않음
 
-# Pycaret을 활용한 Anomaly detection model 성능 평가  
+## Metric
+
+Pycaret을 활용해 평가를 진행함.
+
 1. Pycaret 전용 Dictionary 데이터 생성  
    1.1 BeatGAN Fake Data 생성 (위 항목 확인)  
    1.2 Utils/preprocess.py의 NumpySave 함수 save 인자 True로 변경  
@@ -43,8 +50,8 @@ python main.py --elename SO2 --isize 320  --istest
    exit()
    ```
 2. Pycaret 전용 데이터를 통한 평가 진행
-- data/NIER_dataset/ 에서 생성된 데이터 확인
-- evaluate_pycaret.ipynb 파일로 생성 데이터를 활용하여 **best f1-score** 산출
-![](/images/2022-01-16-18-56-33.png)  
+- data/NIER_dataset/ 에서 생성된 데이터 확인 (스펠링 G의 의미가 Fake Data가 포함된 데이터란 의미)
 
-- 위 그림에서 보이는 G의 의미는 model이 ....
+![](/images/2022-01-16-18-56-33.png)
+
+- evaluate_pycaret.ipynb 파일로 생성 데이터를 활용하여 **best f1-score** 산출
