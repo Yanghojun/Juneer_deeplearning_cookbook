@@ -3,6 +3,7 @@
 # https://www.kaggle.com/code/bunnyyy/medical-image-denoising-using-autoencoders/notebook
 
 # For ML Models
+
 import tensorflow as tf
 from tensorflow import keras
 from tensorflow.keras.layers import *
@@ -51,6 +52,7 @@ def open_images(paths, size=TRAIN_SIZE):
     and returns them as an array of shape (None, Height, Width, Channels)
     '''
     images = []
+    
     for path in paths:
         image = load_img(path, target_size=(size, size, 3))
         image = np.array(image)/255.0 # Normalize image pixel values to be between 0 and 1
@@ -123,6 +125,7 @@ if __name__ == '__main__':
     train_image_paths = all_image_paths[:200]
     test_image_paths = all_image_paths[200:]
     noise_image_paths = [noise_dir + file for file in os.listdir(noise_dir) if file.endswith('.png')]
+    
     
     # image = open_images([train_image_paths[27]])
     # noise_img = add_noise(image, amount=0.2)

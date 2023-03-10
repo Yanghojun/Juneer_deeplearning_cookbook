@@ -27,6 +27,7 @@ python main.py --elename SO2 --isize 320  --istest
 
 ![](/images/2022-01-16-18-42-09.png)
 
+
 2. utils/data_generator.py 스크립트 사용
     ```python
     python utils/data_generator.py --elename SO2 --isize 320  --generated

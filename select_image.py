@@ -2,9 +2,11 @@ import cv2
 from glob import glob
 import numpy as np
 from tqdm import tqdm
+import keras
 import os
 
 SAVE_DIR = '/home/Juneer_deeplearning_cookbook/data/las_for_autoencoder/'
+
 os.makedirs(SAVE_DIR, exist_ok=True)
 os.makedirs(SAVE_DIR + 'original/', exist_ok=True)
 os.makedirs(SAVE_DIR + 'noise_deleted/', exist_ok=True)
@@ -18,7 +20,6 @@ if __name__ == '__main__':
         binary_img = np.where(img < 120, 0, img)
         result = cv2.hconcat([img, binary_img])
         cv2.imwrite(SAVE_DIR + 'noise_deleted/' + img_path.split('/')[-1], binary_img)
-        
     
     # img = cv2.imread('./data/31366_00013.png')
     # mean_denoising = cv2.fastNlMeansDenoisingColored(img,None,10,10,7,21)
