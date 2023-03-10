@@ -13,4 +13,4 @@
 ## data 디렉토리에 있는 모든 파일은 무시하지만
 ## py 스크립트는 포함시킴
 /dataset/*
-!/data/*.py
+!/dataset/*.py
