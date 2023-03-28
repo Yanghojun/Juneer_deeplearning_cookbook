@@ -1,58 +1,236 @@
-import os
-import sys
-from glob import glob
-sys.path.append(os.path.dirname(os.path.abspath(os.path.dirname(__file__))))
-from base.keras_data_loader_base import DataLoader
-import matplotlib.pyplot as plt
-from keras.utils import to_categorical
+# pytorch
+from torch.utils.data import Dataset, DataLoader
+from torchvision import transforms
+
+# keras
 from keras.utils import load_img
-import yaml
+import keras.utils
+
+# etc..
+from sklearn.model_selection import train_test_split
+import os
 import numpy as np
+from glob import glob
 from tqdm import tqdm
 from PIL import Image
+from base.data_loader_base import BaseDataLoader
 
-class LasDataLoader(DataLoader):
-	def __init__(self, config):
-		super().__init__(config)
-		return
+class Keras_Dataloader(keras.utils.Sequence):
+	def __init__(self, config, train=True):
+		self.config = config
+		self.batch_size = self.config.config_namespace.BATCH_SIZE
 
-	def load_dataset(self):
-		print("Loading the dataset from local directory")
-		
-		# img_paths, label_paths = glob(self.config.data_path)
-		img_paths = glob(os.path.join(self.config.config_namespace.DATA_PATH, '*.png'))
-		img_paths = img_paths[:self.config.config_namespace.DATA_NUM]
-		
-		imgs = []
-		for img_path in tqdm(img_paths, desc="Load original images...", ascii=True, leave=True, colour='red'):
-			img = load_img(img_path)		# load_img return PIL object
+		if train:
+			dir_path = self.config.config_namespace.TRAIN_DATA_PATH
+			# self.img_paths = glob(os.path.join(self.config.config_namespace.TRAIN_DATA_PATH, '*.png'))
+		else:
+			dir_path = self.config.config_namespace.TEST_DATA_PATH
+			# self.img_paths = glob(os.path.join(self.config.config_namespace.TEST_DATA_PATH, '*.png'))
+		file_list = os.listdir(dir_path)
+		self.x_paths = [os.path.join(dir_path, file) for file in file_list if '_denoised.png' not in file]
+		self.y_paths = [os.path.join(dir_path, file) for file in file_list if '_denoised.png' in file]
+		self.x_paths.sort(), self.y_paths.sort()
+
+		# self.train_x = np.array([])
+		# self.train_y = np.array([])
+
+		# self.test_x = np.array([])
+		# self.test_y = np.array([])
+
+		# self.load_dataset()
+		# self.preprocess_dataset()
+		# self.print_dataset_details()
+	
+
+	def __getitem__(self, idx):
+		# batch_x_path = self.img_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+		batch_x_path = self.x_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+		batch_y_path = self.y_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+
+		x_li = []
+		y_li = []
+		for img_path in batch_x_path:
+			img = load_img(img_path)
 			img = np.array(img)
-			imgs.append(img)
-		self.train_x, self.train_y = np.array(imgs), None		# Batch * Height * Width * Channel
-																# self.train_y will be assigned from preprocess_dataset method
-
-
-	def print_dataset_details(self):
-		print(f"Total Data Shape: {self.train_x.shape}")
-		print(f"Total train_y Data Shape: {self.train_y.shape}")
-
-	def preprocess_dataset(self):
-
-		# Numpy Broadcasting - Normalization
-		# self.train_x = self.train_x / 255.0
-
-		# visualize data(But This can't operate on normalized images)
-		# im1 = Image.fromarray(self.train_x[0])
-		# im1.save("im1.jpg")
+			img = img[:, :, :self.config.config_namespace.CHANNELS]
+			img = img / 255.0
+			x_li.append(img)
 		
-		imgs=[]
-		for img in tqdm(self.train_x, desc="Denoising to make train_y data for autoencoder...", ascii=True, colour='green'):
-			binary_img = np.where(img < 120, 0, img)
-			imgs.append(binary_img)
-		self.train_y = np.array(imgs)
+		for img_path in batch_y_path:
+			img = load_img(img_path)
+			img = np.array(img)
+			img = img[:, :, :self.config.config_namespace.CHANNELS]
+			img = img / 255.0
+			y_li.append(img)
 
-if __name__ == '__main__':
-	with open('cfg/las_cfg.yaml') as f:
-		conf = yaml.load(f, Loader=yaml.FullLoader)
-		print(conf)
-	# dataloader = LasDataLoader()
+			# cv_img = np.where(img < self.config.config_namespace.THRESHOLD, 0, img)
+			# cv_img = cv_img / 255.0
+			# y_li.append(cv_img)
+
+		x = np.array(x_li)
+		y = np.array(y_li)
+
+		return x, y
+
+	def __len__(self):
+		return int(np.floor(len(self.x_paths) / self.batch_size))
+
+	# shuffle 기능은 나중에..?
+	def on_epoch_end(self):
+		pass
+
+	# def __iter__(self):
+	# 	pass
+
+	# def load_dataset(self):
+	# 	raise NotImplementedError()
+
+	# def print_dataset_details(self):
+	# 	raise NotImplementedError()
+
+	# def preprocess_dataset(self):
+	# 	raise NotImplementedError()1
+
+class LasDataLoader(DataLoader, keras.utils.Sequence):
+	def __init__(self, config, train=True):
+		self.config = config
+		self.batch_size = self.config.config_namespace.BATCH_SIZE
+		if train:
+			dir_path = self.config.config_namespace.TRAIN_DATA_PATH
+			# self.img_paths = glob(os.path.join(self.config.config_namespace.TRAIN_DATA_PATH, '*.png'))
+		else:
+			dir_path = self.config.config_namespace.TEST_DATA_PATH
+			# self.img_paths = glob(os.path.join(self.config.config_namespace.TEST_DATA_PATH, '*.png'))
+
+		file_list = os.listdir(dir_path)
+		self.x_paths = [os.path.join(dir_path, file) for file in file_list if '_denoised.png' not in file]
+		self.y_paths = [os.path.join(dir_path, file) for file in file_list if '_denoised.png' in file]
+		self.x_paths.sort(), self.y_paths.sort()
+
+	def __len__(self):
+		# torch는 batchsize로 따로 조절해줄 필요 없을듯. torch Loader 클래스에 batch argument 존재
+		if self.config.config_namespace.PYTORCH:
+			return len(self.x_paths)
+
+		else:
+			return int(np.floor(len(self.x_paths) / self.batch_size))
+
+	def __getitem__(self, idx):
+		# batch_x_path = self.img_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+		# batch_x_path = self.x_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+		# batch_y_path = self.y_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+
+		if self.config.config_namespace.PYTORCH:
+			x_path, y_path = self.x_paths[idx], self.y_paths[idx]
+			img = Image.open(x_path)
+			label = Image.open(y_path)
+			# img, label = Image.open(x_path), Image.open(y_path)
+			img, label = transforms.ToTensor(img), transforms.ToTensor(label)
+			return img, label
+
+		else:
+			# batch_x_path = self.img_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+			batch_x_path = self.x_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+			batch_y_path = self.y_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+
+			x_li = []
+			y_li = []
+			for img_path in batch_x_path:
+				img = load_img(img_path)
+				img = np.array(img)
+				img = img[:, :, :self.config.config_namespace.CHANNELS]
+				img = img / 255.0
+				x_li.append(img)
+			
+			for img_path in batch_y_path:
+				img = load_img(img_path)
+				img = np.array(img)
+				img = img[:, :, :self.config.config_namespace.CHANNELS]
+				img = img / 255.0
+				y_li.append(img)
+
+				# cv_img = np.where(img < self.config.config_namespace.THRESHOLD, 0, img)
+				# cv_img = cv_img / 255.0
+				# y_li.append(cv_img)
+
+			x = np.array(x_li)
+			y = np.array(y_li)
+
+			return x, y
+
+class LasDataSet(Dataset):
+	def __init__(self, config, train=True):
+		self.config = config
+		self.batch_size = self.config.config_namespace.BATCH_SIZE
+		self.transform = transforms.ToTensor()
+
+		if train:
+			dir_path = self.config.config_namespace.TRAIN_DATA_PATH
+			# self.img_paths = glob(os.path.join(self.config.config_namespace.TRAIN_DATA_PATH, '*.png'))
+		else:
+			dir_path = self.config.config_namespace.TEST_DATA_PATH
+			# self.img_paths = glob(os.path.join(self.config.config_namespace.TEST_DATA_PATH, '*.png'))
+
+		file_list = os.listdir(dir_path)
+		self.x_paths = [os.path.join(dir_path, file) for file in file_list if '_denoised.png' not in file]
+		self.y_paths = [os.path.join(dir_path, file) for file in file_list if '_denoised.png' in file]
+		self.x_paths.sort(), self.y_paths.sort()
+
+	def __len__(self):
+		# torch는 batchsize로 따로 조절해줄 필요 없을듯. torch Loader 클래스에 batch argument 존재
+		if self.config.config_namespace.PYTORCH:
+			return len(self.x_paths)
+
+		else:
+			return int(np.floor(len(self.x_paths) / self.batch_size))
+
+	def __getitem__(self, idx):
+		# batch_x_path = self.img_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+		# batch_x_path = self.x_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+		# batch_y_path = self.y_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+
+		if self.config.config_namespace.PYTORCH:
+			x_path, y_path = self.x_paths[idx], self.y_paths[idx]
+			img = Image.open(x_path)
+			label = Image.open(y_path)
+
+			img, label = self.transform(img), self.transform(label)
+			# img = transforms.ToTensor(img)
+			# label = transforms.ToTensor(label)
+			# img, label = transforms.ToTensor(img), transforms.ToTensor(label)
+			return img, label
+
+		else:
+			# batch_x_path = self.img_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+			batch_x_path = self.x_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+			batch_y_path = self.y_paths[idx * self.batch_size:(idx+1) * self.batch_size]
+
+			x_li = []
+			y_li = []
+			for img_path in batch_x_path:
+				img = load_img(img_path)
+				img = np.array(img)
+				img = img[:, :, :self.config.config_namespace.CHANNELS]
+				img = img / 255.0
+				x_li.append(img)
+			
+			for img_path in batch_y_path:
+				img = load_img(img_path)
+				img = np.array(img)
+				img = img[:, :, :self.config.config_namespace.CHANNELS]
+				img = img / 255.0
+				y_li.append(img)
+
+				# cv_img = np.where(img < self.config.config_namespace.THRESHOLD, 0, img)
+				# cv_img = cv_img / 255.0
+				# y_li.append(cv_img)
+
+			x = np.array(x_li)
+			y = np.array(y_li)
+
+			return x, y
+
+def build_las_data_loader(config, train):
+	dataset = LasDataSet(config, train)
+	dataloader = DataLoader(dataset, batch_size=config.config_namespace.BATCH_SIZE, shuffle=True)
+	return dataloader

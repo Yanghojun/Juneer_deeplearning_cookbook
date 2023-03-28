@@ -1,16 +1,13 @@
-import numpy as np
-import os
-from keras.models import Sequential
-from keras.callbacks import History, ModelCheckpoint
+class BaseModel():
+	def __init__(self, config, train_dataloader, test_dataloader):
+		self.train_dataloader = train_dataloader
+		self.test_dataloader = test_dataloader
+		self.config = config
 
-class BaseModel(object):
-    def __init__(self, config, dataset):
-        self.config = config
-        self.model = self.define_model()        # define_model 함수는 자식 클래스에서 재정의된다. 
-                                                # 그래서 model.summary() 출력이 가능하다.
-        print(self.model.summary())
-        self.dataset = dataset
-        
-    def define_model(self):
-        raise NotImplementedError
-        # print("this is basemodel define_model")
+		self.model = self.define_model()
+		
+	def define_model(self):
+		raise NotImplementedError
+
+	def fit_model(self):
+		raise NotImplementedError

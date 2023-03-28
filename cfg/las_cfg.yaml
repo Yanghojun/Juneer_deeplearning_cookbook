@@ -1,2 +1,18 @@
-DATA_NUM: 250
-DATA_PATH: './dataset/las_data_annotated/'
+PYTORCH: True   # If False, keras framework will be executed
+
+# DATA_NUM: 1418
+TRAIN_DATA_PATH: './dataset/las_data_hand_denoised/train/'
+TEST_DATA_PATH: './dataset/las_data_hand_denoised/test/'
+THRESHOLD: 45
+# path to save weight file
+SAVED_MODEL_DIR: './3epoch_hand_denoised/'
+
+# path to load weight
+LOAD_MODEL_DIR: './3epoch_hand_denoised/'
+CHANNELS: 3
+BATCH_SIZE: 2
+EPOCHS: 3
+# OPTIMIZER: RMSprop(Learning_rate=0.00001)
+OPTIMIZER: "adam"
+LOSS: 'binary_crossentropy'
+GENERATED_DATA_PATH: './dataset/generated_hand_denoised/'
